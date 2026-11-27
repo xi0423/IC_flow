@@ -1,0 +1,2343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>芯片硅后（回片后）测试入门指南</title>
+<style>
+:root{
+  --fg:#1f2937; --muted:#6b7280; --bg:#ffffff; --soft:#f6f8fb; --line:#e5e7eb;
+  --pri:#2563eb; --pri-soft:#eff4ff; --ok:#16a34a; --warn:#d97706; --bad:#dc2626; --vio:#7c3aed;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;color:var(--fg);background:var(--bg);line-height:1.75;font-size:15.5px}
+nav#toc{position:fixed;top:0;left:0;bottom:0;width:272px;overflow-y:auto;background:var(--soft);border-right:1px solid var(--line);padding:22px 16px 40px}
+nav#toc .brand{font-weight:700;font-size:16px;margin-bottom:4px}
+nav#toc .sub{font-size:12px;color:var(--muted);margin-bottom:14px}
+nav#toc ol{list-style:none;margin:0;padding:0}
+nav#toc li a{display:block;padding:4px 10px;border-radius:6px;color:var(--fg);text-decoration:none;font-size:14px}
+nav#toc li li a{padding-left:24px;font-size:13px;color:var(--muted)}
+nav#toc li a:hover{background:#e8eefc}
+nav#toc li a.active{background:var(--pri);color:#fff}
+main{margin-left:272px;padding:36px 56px 80px;max-width:1120px}
+h1{font-size:30px;margin:0 0 6px}
+h2{font-size:23px;margin:52px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+h3{font-size:18px;margin:30px 0 10px}
+h4{font-size:15.5px;margin:20px 0 6px}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:15px}
+table{border-collapse:collapse;width:100%;margin:12px 0 18px;font-size:14px}
+th,td{border:1px solid var(--line);padding:7px 10px;vertical-align:top;text-align:left}
+th{background:var(--soft);font-weight:600}
+tr:nth-child(even) td{background:#fcfcfd}
+code{background:#f1f3f7;padding:1px 5px;border-radius:4px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px}
+.box{border-radius:8px;padding:10px 14px;margin:14px 0;border-left:4px solid}
+.tip{background:#eef6ff;border-color:var(--pri)}
+.warn{background:#fff7ed;border-color:var(--warn)}
+.analogy{background:#f5f3ff;border-color:var(--vio)}
+.box b:first-child{display:inline-block;margin-right:4px}
+figure{margin:20px 0 26px;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fff}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-size:13.5px;color:var(--muted);margin-top:10px}
+figcaption b{color:var(--fg)}
+svg text{font-family:inherit}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps>li{counter-increment:s;position:relative;padding:6px 0 6px 40px}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:7px;width:26px;height:26px;border-radius:50%;background:var(--pri);color:#fff;font-size:13px;text-align:center;line-height:26px;font-weight:600}
+.check li{list-style:none;margin-left:-20px}
+.check li::before{content:"☐ ";color:var(--pri)}
+.tags span{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;background:var(--pri-soft);color:var(--pri);margin:2px 4px 2px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+/* 术语悬停提示 */
+a.t{color:inherit;text-decoration:none;border-bottom:1px dotted var(--pri);cursor:help;position:relative}
+a.t:hover{color:var(--pri)}
+a.t[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:100;width:max-content;max-width:330px;white-space:normal;background:#111827;color:#f9fafb;font-size:13px;line-height:1.55;font-weight:400;padding:8px 10px;border-radius:7px;box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none}
+/* 术语表 */
+.gloss-group{margin-top:26px}
+.g{border:1px solid var(--line);border-radius:9px;padding:10px 14px;margin:10px 0;background:#fff;scroll-margin-top:20px}
+.g:target{border-color:var(--pri);box-shadow:0 0 0 3px #dbe6fe}
+.g h4{margin:0 0 4px;font-size:15.5px}
+.g h4 small{font-weight:400;color:var(--muted);margin-left:6px}
+.g p{margin:3px 0;font-size:14.5px}
+.g .k{display:inline-block;min-width:76px;font-weight:600;color:var(--pri)}
+.g .k.an{color:var(--vio)}
+.gidx{columns:4;font-size:13.5px;margin:8px 0 0}
+.gidx a{color:var(--pri);text-decoration:none}
+@media (max-width:980px){
+  nav#toc{position:static;width:auto;border-right:none;border-bottom:1px solid var(--line)}
+  main{margin-left:0;padding:24px 18px}
+  .grid2{grid-template-columns:1fr}.gidx{columns:2}
+}
+@media print{
+  @page{size:A4;margin:16mm 14mm}
+  body{font-size:11pt;line-height:1.6}
+  nav#toc{display:none}
+  main{margin:0;padding:0;max-width:none}
+  h2{break-before:page;border-bottom:1px solid #999}
+  h2.nobreak{break-before:auto}
+  figure,table,.box,.g{break-inside:avoid}
+  a.t{border-bottom:none}
+  a.t::after{display:none!important}
+  a{color:inherit}
+  .noprint{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav id="toc">
+  <div class="brand">硅后测试入门指南</div>
+  <div class="sub">鼠标悬停虚线下划线的术语可看简要解释，点击跳到详细说明</div>
+  <ol>
+    <li><a href="#s0">0. 写给新手：先看全貌</a></li>
+    <li><a href="#s1">1. 测试台长什么样</a></li>
+    <li><a href="#s2">2. 阶段一：回片前准备</a></li>
+    <li><a href="#s3">3. 阶段二：Bringup 点亮</a></li>
+    <li><a href="#s4">4. 阶段三：Bare Metal 裸机测试</a></li>
+    <li><a href="#s5">5. 阶段四：OS 阶段</a></li>
+    <li><a href="#s6">6. 软硬件联调</a>
+      <ol>
+        <li><a href="#s6-1">调试工具</a></li>
+        <li><a href="#s6-2">用例复用</a></li>
+        <li><a href="#s6-3">硬件 bug 还是软件 bug</a></li>
+        <li><a href="#s6-4">ECO / Workaround</a></li>
+        <li><a href="#s6-5">协作与问题跟踪</a></li>
+      </ol>
+    </li>
+    <li><a href="#s7">7. 测试类别一：基础功能</a></li>
+    <li><a href="#s8">8. 测试类别二：性能</a></li>
+    <li><a href="#s9">9. 测试类别三：功耗</a></li>
+    <li><a href="#s10">10. 测试类别四：稳定性与压力</a></li>
+    <li><a href="#s11">11. Checklist</a></li>
+    <li><a href="#s12">12. 常见坑</a></li>
+    <li><a href="#s13">13. 术语详解</a></li>
+  </ol>
+</nav>
+
+<main>
+<h1>芯片硅后（回片后）测试入门指南</h1>
+<p class="lead">面向第一次参与回片测试的工程师。以典型 SoC（多核 CPU + DDR + 总线互联 + 外设 + 多媒体 + 安全模块）为例，MCU、ASIC、加速器芯片可按需裁剪。正文里带<a class="t" href="#g-term-demo">虚线下划线</a>的词都是术语：鼠标悬停看一句话解释，点击跳到第 13 章看详细说明（是什么、为什么需要、测试中怎么用、打个比方）。</p>
+
+<!-- ============ 0 ============ -->
+<h2 id="s0" class="nobreak">0. 写给新手：先看全貌</h2>
+
+<div class="box analogy"><b>打个比方：</b>芯片设计像造一辆新车。<a class="t" href="#g-presilicon">Pre-silicon</a> 验证相当于在电脑上做仿真、在台架上测发动机；<a class="t" href="#g-tapeout">流片（Tape-out）</a>相当于把图纸交给工厂；“回片”就是第一批真车下线。硅后测试就是试车：先看能不能打着火（<a class="t" href="#g-bringup">Bringup</a>），再一个个试车灯、刹车、空调（<a class="t" href="#g-baremetal">裸机</a>功能测试），然后让司机真正上路（OS 阶段），最后跑高原、跑高寒、跑长途（性能、功耗、稳定性测试）。</div>
+
+<h3>为什么仿真过了还要硅后测试？</h3>
+<p>仿真、<a class="t" href="#g-fpga">FPGA 原型</a>、<a class="t" href="#g-emulator">Emulator</a> 验证的都是“模型”。真实硅片会额外暴露这些问题：</p>
+<ul>
+  <li><b>仿真太慢没跑到的场景</b>：完整的 OS 启动、几天几夜的长时间运行、大量并发。</li>
+  <li><b>模拟电路和物理效应</b>：<a class="t" href="#g-pll">PLL</a>、<a class="t" href="#g-phy">PHY</a>、<a class="t" href="#g-serdes">SerDes</a>、IO 时序、电源噪声（<a class="t" href="#g-irdrop">IR drop</a>）、温度效应。</li>
+  <li><b>工艺偏差</b>：每颗芯片的“体质”不同（<a class="t" href="#g-corner">工艺角 Corner</a>）。</li>
+  <li><b>系统级交互</b>：板子上的 <a class="t" href="#g-pmic">PMIC</a>、<a class="t" href="#g-ddr">DDR</a> 颗粒、Flash 等外部器件的兼容性。</li>
+  <li><b>规格（Spec）本身的问题</b>：设计完全符合 Spec，但 Spec 和真实使用场景不匹配。</li>
+</ul>
+
+<h3>硅后测试要回答的问题</h3>
+<table>
+<tr><th>目标</th><th>要回答的问题</th></tr>
+<tr><td>功能正确</td><td>每个模块是否按 Spec 工作？有没有逃过仿真的 <a class="t" href="#g-rtl">RTL</a> bug？</td></tr>
+<tr><td>电气/时序裕量</td><td>在多大的电压、频率、温度范围内能稳定工作？<a class="t" href="#g-vmin">Vmin/Fmax</a> 是多少？</td></tr>
+<tr><td>性能</td><td>带宽、延迟、跑分是否达到产品目标？</td></tr>
+<tr><td>功耗</td><td>各种场景耗电多少？待机电流是否达标？</td></tr>
+<tr><td>稳定可靠</td><td>长时间、高负载、极端环境下会不会死机或算错？</td></tr>
+<tr><td>软件可用</td><td>能否给量产软件（<a class="t" href="#g-bsp">BSP</a>、驱动、OS）提供稳定基础？哪些硬件问题要靠软件 <a class="t" href="#g-workaround">workaround</a> 绕过去？</td></tr>
+<tr><td>量产决策</td><td>直接量产，还是要做 <a class="t" href="#g-eco">ECO</a> 改版？</td></tr>
+</table>
+
+<figure>
+<svg viewBox="0 0 960 250" role="img" aria-label="硅后测试总体流程">
+  <defs>
+    <marker markerUnits="userSpaceOnUse" id="a0" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+  </defs>
+  <g font-size="14" text-anchor="middle">
+    <polygon points="10,30 145,30 165,65 145,100 10,100" fill="#e0e7ff" stroke="#6366f1"/>
+    <text x="85" y="60" font-weight="700">回片前准备</text><text x="85" y="80" font-size="12" fill="#475569">计划/板卡/软件</text>
+    <polygon points="160,30 295,30 315,65 295,100 160,100 180,65" fill="#dbeafe" stroke="#3b82f6"/>
+    <text x="240" y="60" font-weight="700">ATE 筛片</text><text x="240" y="80" font-size="12" fill="#475569">剔除坏片/分 bin</text>
+    <polygon points="310,30 445,30 465,65 445,100 310,100 330,65" fill="#dcfce7" stroke="#22c55e"/>
+    <text x="390" y="60" font-weight="700">Bringup</text><text x="390" y="80" font-size="12" fill="#475569">上电/时钟/JTAG/DDR</text>
+    <polygon points="460,30 595,30 615,65 595,100 460,100 480,65" fill="#fef9c3" stroke="#eab308"/>
+    <text x="540" y="60" font-weight="700">Bare Metal</text><text x="540" y="80" font-size="12" fill="#475569">驱动级用例</text>
+    <polygon points="610,30 745,30 765,65 745,100 610,100 630,65" fill="#ffedd5" stroke="#f97316"/>
+    <text x="690" y="60" font-weight="700">OS 阶段</text><text x="690" y="80" font-size="12" fill="#475569">U-Boot/Linux/RTOS</text>
+    <polygon points="760,30 950,30 950,100 760,100 780,65" fill="#fce7f3" stroke="#ec4899"/>
+    <text x="862" y="60" font-weight="700">系统级验证/量产</text><text x="862" y="80" font-size="12" fill="#475569">客户样机/Errata</text>
+  </g>
+  <g font-size="12.5">
+    <rect x="470" y="118" width="480" height="22" rx="4" fill="#eff6ff" stroke="#93c5fd"/><text x="480" y="134">功能验证（Bare Metal 起步，OS 阶段扩展到系统级场景）</text>
+    <rect x="470" y="146" width="480" height="22" rx="4" fill="#f0fdf4" stroke="#86efac"/><text x="480" y="162">性能验证（DDR 带宽等在裸机就开始，OS 下全面展开）</text>
+    <rect x="390" y="174" width="560" height="22" rx="4" fill="#fefce8" stroke="#fde047"/><text x="400" y="190">功耗验证（上电时就记录电流基线，OS 下做场景功耗与低功耗模式）</text>
+    <rect x="620" y="202" width="330" height="22" rx="4" fill="#fef2f2" stroke="#fca5a5"/><text x="630" y="218">稳定性与压力（OS 稳定后大规模展开）</text>
+    <rect x="10" y="230" width="940" height="16" rx="3" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="480" y="242" text-anchor="middle" font-size="11.5" fill="#334155">问题跟踪 · ECO 评估 · Workaround 沉淀 —— 贯穿全程</text>
+  </g>
+</svg>
+<figcaption><b>图 0：总体流程。</b>上排是推进阶段，下方横条表示四大测试类别大致从哪个阶段开始。注意阶段之间不是严格串行：Bringup 打通后，裸机测试和 OS 移植通常并行推进。</figcaption>
+</figure>
+
+<h3>参与的角色</h3>
+<table>
+<tr><th>角色</th><th>主要职责</th></tr>
+<tr><td>硅后测试 Owner / PM</td><td>计划、进度、问题优先级、跨团队协调</td></tr>
+<tr><td>硬件/板级工程师</td><td>测试板设计、电源、<a class="t" href="#g-si">信号完整性</a>、测量</td></tr>
+<tr><td>芯片设计 / IP Owner</td><td>解释设计行为、定位 RTL bug、出 ECO</td></tr>
+<tr><td>验证（DV）工程师</td><td>复用 pre-silicon 用例，在仿真里复现硅上问题</td></tr>
+<tr><td>软件 / BSP 工程师</td><td><a class="t" href="#g-bootrom">BootROM</a> 配合、启动代码、驱动、OS 移植</td></tr>
+<tr><td>系统/性能/功耗工程师</td><td>性能、功耗建模，并与实测对比</td></tr>
+<tr><td>测试/产品工程师（TE/PE）</td><td><a class="t" href="#g-ate">ATE</a> 测试程序、良率、分 <a class="t" href="#g-bin">bin</a>、可靠性试验</td></tr>
+</table>
+
+<!-- ============ 1 ============ -->
+<h2 id="s1">1. 测试台长什么样</h2>
+<p>在开始讲流程之前，先认识实验室桌面上的东西。一个典型的硅后测试台由<b>主机</b>、<b>调试器</b>、<b>电源</b>、<b>测量仪器</b>和<b>验证板</b>组成，芯片焊在（或插在 socket 里）验证板上。</p>
+
+<figure>
+<svg viewBox="0 0 980 530" role="img" aria-label="测试台硬件连接图">
+  <defs><marker id="h1k" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker><marker id="h1o" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b45309"/></marker><marker id="h1r" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="h1b" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0284c7"/></marker><marker id="h1g" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+  <!-- 主机远程控制总线 -->
+  <path d="M57 200 V18 H875 V58" fill="none" stroke="#94a3b8" stroke-dasharray="6 4" marker-end="url(#h1g)"/>
+  <path d="M57 300 V442 H178" fill="none" stroke="#94a3b8" stroke-dasharray="6 4" marker-end="url(#h1g)"/>
+  <text x="330" y="12" font-size="11.5" fill="#64748b">灰色虚线：主机通过 LAN / USB / GPIB 远程控制电源和仪器</text>
+  <rect x="10" y="200" width="95" height="100" rx="6" fill="#e0e7ff" stroke="#6366f1"/>
+  <text x="57.5" y="247.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2937">主机 PC</text>
+  <text x="57.5" y="264.0" text-anchor="middle" font-size="11" fill="#1f2937">调试/自动化</text>
+  <!-- 左侧设备 -->
+  <rect x="180" y="150" width="120" height="46" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="240.0" y="170.0" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">JTAG 调试器</text>
+  <text x="240.0" y="187.0" text-anchor="middle" font-size="11" fill="#1f2937">TRACE32/J-Link</text>
+  <rect x="180" y="230" width="120" height="36" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="240.0" y="253.0" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">USB 转串口</text>
+  <rect x="180" y="305" width="120" height="46" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="240.0" y="325.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1f2937">继电器控制盒</text>
+  <text x="240.0" y="342.0" text-anchor="middle" font-size="11" fill="#1f2937">复位 / Boot 模式</text>
+  <rect x="180" y="420" width="120" height="46" rx="6" fill="#fef3c7" stroke="#f59e0b"/>
+  <text x="240.0" y="440.0" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">可编程电源</text>
+  <text x="240.0" y="457.0" text-anchor="middle" font-size="11" fill="#1f2937">可调电压 + 限流</text>
+  <g fill="none" stroke="#334155" stroke-width="1.6">
+    <path d="M105 215 H150 V173 H178" marker-end="url(#h1k)"/>
+    <path d="M105 248 H178" marker-start="url(#h1k)" marker-end="url(#h1k)"/>
+    <path d="M105 285 H150 V328 H178" marker-end="url(#h1k)"/>
+  </g>
+  <!-- 验证板 -->
+  <rect x="330" y="40" width="440" height="445" rx="12" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="760" y="476" text-anchor="end" font-size="13" font-weight="700" fill="#15803d">验证板（EVB）</text>
+  <rect x="345" y="155" width="90" height="36" rx="6" fill="#fff" stroke="#16a34a"/>
+  <text x="390.0" y="178.0" text-anchor="middle" font-size="12" fill="#1f2937">JTAG 座</text>
+  <rect x="345" y="230" width="90" height="36" rx="6" fill="#fff" stroke="#16a34a"/>
+  <text x="390.0" y="253.0" text-anchor="middle" font-size="12" fill="#1f2937">UART 座</text>
+  <rect x="345" y="310" width="90" height="36" rx="6" fill="#fff" stroke="#16a34a"/>
+  <text x="390.0" y="333.0" text-anchor="middle" font-size="11.5" fill="#1f2937">复位/Boot 拨码</text>
+  <rect x="345" y="420" width="120" height="46" rx="6" fill="#fff" stroke="#16a34a"/>
+  <text x="405.0" y="440.0" text-anchor="middle" font-size="12" fill="#1f2937">电源输入</text>
+  <text x="405.0" y="457.0" text-anchor="middle" font-size="11" fill="#1f2937">+ 检流电阻</text>
+  <rect x="490" y="420" width="130" height="46" rx="6" fill="#fff" stroke="#16a34a"/>
+  <text x="555.0" y="440.0" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">PMIC</text>
+  <text x="555.0" y="457.0" text-anchor="middle" font-size="11" fill="#1f2937">多路电源输出</text>
+  <rect x="520" y="60" width="100" height="40" rx="6" fill="#fff" stroke="#16a34a"/>
+  <text x="570.0" y="85.0" text-anchor="middle" font-size="12" fill="#1f2937">晶振 24MHz</text>
+  <!-- SoC -->
+  <rect x="480" y="150" width="180" height="220" rx="8" fill="#1e293b"/>
+  <text x="570" y="172" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">SoC 芯片</text>
+  <g font-size="11" text-anchor="middle">
+    <rect x="495" y="185" width="70" height="35" rx="4" fill="#60a5fa"/><text x="530" y="207">CPU</text>
+    <rect x="575" y="185" width="70" height="35" rx="4" fill="#60a5fa"/><text x="610" y="207">SRAM</text>
+    <rect x="495" y="230" width="70" height="35" rx="4" fill="#a78bfa"/><text x="530" y="245">DAP/</text><text x="530" y="258">CoreSight</text>
+    <rect x="575" y="230" width="70" height="35" rx="4" fill="#34d399"/><text x="610" y="252">外设</text>
+    <rect x="495" y="275" width="150" height="30" rx="4" fill="#fbbf24"/><text x="570" y="295">DDR 控制器 + PHY</text>
+    <rect x="495" y="315" width="150" height="40" rx="4" fill="#f87171"/><text x="570" y="339">PLL / 复位 / PMU</text>
+  </g>
+  <rect x="685" y="160" width="70" height="80" rx="6" fill="#fff" stroke="#16a34a"/>
+  <text x="720.0" y="197.0" text-anchor="middle" font-size="12" fill="#1f2937">DDR</text>
+  <text x="720.0" y="214.0" text-anchor="middle" font-size="11" fill="#1f2937">颗粒</text>
+  <rect x="685" y="262" width="70" height="46" rx="6" fill="#fff" stroke="#16a34a"/>
+  <text x="720.0" y="282.0" text-anchor="middle" font-size="12" fill="#1f2937">Flash</text>
+  <text x="720.0" y="299.0" text-anchor="middle" font-size="11" fill="#1f2937">eMMC/SPI</text>
+  <rect x="685" y="330" width="70" height="50" rx="6" fill="#fff" stroke="#16a34a"/>
+  <text x="720.0" y="352.0" text-anchor="middle" font-size="11.5" fill="#1f2937">外部器件</text>
+  <text x="720.0" y="369.0" text-anchor="middle" font-size="11" fill="#1f2937">PCIe/USB/网口</text>
+  <!-- 板内信号 -->
+  <g fill="none" stroke="#334155" stroke-width="1.6">
+    <path d="M300 173 H343" marker-end="url(#h1k)"/>
+    <path d="M435 173 H478" marker-end="url(#h1k)"/>
+    <path d="M300 248 H345"/><path d="M435 248 H480"/>
+    <path d="M300 328 H343" marker-end="url(#h1k)"/>
+    <path d="M435 328 H478" marker-end="url(#h1k)"/>
+    <path d="M570 100 V148" marker-end="url(#h1k)"/>
+    <path d="M660 200 H685" stroke-width="3"/>
+    <path d="M660 285 H685" stroke-width="2"/>
+    <path d="M660 355 H685" stroke-width="2"/>
+  </g>
+  <!-- 供电路径 -->
+  <g fill="none" stroke="#b45309" stroke-width="2.2">
+    <path d="M300 443 H343" marker-end="url(#h1o)"/>
+    <path d="M465 443 H488" marker-end="url(#h1o)"/>
+    <path d="M555 420 V372" marker-end="url(#h1o)"/>
+  </g>
+  <text x="562" y="400" font-size="10.5" fill="#92400e">VDD_CORE/IO/DDR</text>
+  <!-- 仪器 -->
+  <rect x="800" y="58" width="150" height="46" rx="6" fill="#fee2e2" stroke="#ef4444"/>
+  <text x="875.0" y="78.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1f2937">示波器</text>
+  <text x="875.0" y="95.0" text-anchor="middle" font-size="11" fill="#1f2937">电源纹波/时钟/时序</text>
+  <rect x="800" y="172" width="150" height="46" rx="6" fill="#fee2e2" stroke="#ef4444"/>
+  <text x="875.0" y="192.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1f2937">逻辑分析仪</text>
+  <text x="875.0" y="209.0" text-anchor="middle" font-size="11" fill="#1f2937">I2C/SPI/UART 解码</text>
+  <rect x="800" y="262" width="150" height="46" rx="6" fill="#fee2e2" stroke="#ef4444"/>
+  <text x="875.0" y="282.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1f2937">协议分析仪</text>
+  <text x="875.0" y="299.0" text-anchor="middle" font-size="11" fill="#1f2937">PCIe/USB 抓包</text>
+  <rect x="800" y="352" width="150" height="46" rx="6" fill="#e0f2fe" stroke="#0284c7"/>
+  <text x="875.0" y="372.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1f2937">温箱 / Thermostream</text>
+  <text x="875.0" y="389.0" text-anchor="middle" font-size="11" fill="#1f2937">高低温控制</text>
+  <rect x="800" y="430" width="150" height="46" rx="6" fill="#fee2e2" stroke="#ef4444"/>
+  <text x="875.0" y="450.0" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1f2937">电源分析仪 / SMU</text>
+  <text x="875.0" y="467.0" text-anchor="middle" font-size="11" fill="#1f2937">精确测电流/功耗</text>
+  <g fill="none" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5 3">
+    <path d="M800 80 H622" marker-end="url(#h1r)"/>
+    <path d="M800 195 H764 V285 H757" marker-end="url(#h1r)"/>
+    <path d="M800 285 H780 V355 H757" marker-end="url(#h1r)"/>
+    <path d="M800 453 H785 V505 H405 V468" marker-end="url(#h1r)"/>
+  </g>
+  <path d="M800 375 H772" fill="none" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#h1b)"/>
+  <text x="650" y="74" font-size="10.5" fill="#dc2626">探头</text>
+  <text x="420" y="520" font-size="10.5" fill="#dc2626">红色虚线：测量探头（电源分析仪接在检流电阻两端）</text>
+</svg>
+<figcaption><b>图 1：测试台硬件连接图。</b>
+主机通过 <a class="t" href="#g-jtag">JTAG</a> 调试器连到芯片的 <a class="t" href="#g-dap">DAP</a>/<a class="t" href="#g-coresight">CoreSight</a>，可以暂停 CPU、读写内存、下载程序；通过 USB 转串口看芯片的 <a class="t" href="#g-uart">UART</a> 打印；通过继电器自动复位、切换 <a class="t" href="#g-bootmode">Boot 模式</a>。
+可编程电源给板子供电（首次上电一定要限流），经 PMIC 分成多路给芯片。橙色实线是供电路径：可编程电源 → 检流电阻 → PMIC → 芯片各电源轨。红色虚线是测量探头：示波器测晶振和电源波形，逻辑分析仪接 Flash 等低速总线，协议分析仪接 PCIe/USB 等高速接口，电源分析仪接在<a class="t" href="#g-shunt">检流电阻</a>两端测电流；蓝色虚线表示温箱/Thermostream 罩住整块板或芯片控温。灰色虚线表示主机远程控制电源和仪器，这是实现自动化测试的基础。</figcaption>
+</figure>
+
+<div class="box tip"><b>新手提示：</b>第一次进实验室，先搞清楚每根线接的是什么、每块板子的编号和改动记录（板子可能被人飞线改过）、每颗芯片的编号和 ATE 结果。很多“诡异问题”最后发现是用错了板子或用了坏片。</div>
+
+<!-- ============ 2 ============ -->
+<h2 id="s2">2. 阶段一：回片前准备</h2>
+<p>回片前准备决定了样片到手后前两周的效率。经验法则：<b>样片到达前，除了真实芯片以外的一切都应该准备好。</b></p>
+
+<h3>2.1 测试计划</h3>
+<table>
+<tr><th>内容</th><th>要点</th></tr>
+<tr><td>范围与目标</td><td>本轮测哪些模块、功能、场景；哪些明确不测，并写明原因</td></tr>
+<tr><td>Feature 列表与优先级</td><td>从 Spec 提取，按 P0（会阻塞 Bringup 或量产）/ P1 / P2 分级</td></tr>
+<tr><td>测试项矩阵</td><td>Feature × 测试类型（功能/性能/功耗/稳定性）× 平台（ATE / EVB / 系统板）</td></tr>
+<tr><td>入口/出口标准</td><td>每个阶段什么条件下开始、什么条件下算完成（见各章）</td></tr>
+<tr><td>资源计划</td><td>样片数量分配、板卡、仪器、人员、温箱和实验室排期</td></tr>
+<tr><td>里程碑</td><td>首次上电、首次 JTAG 连通、首次 DDR 跑通、首次 Linux 启动、功能全覆盖</td></tr>
+<tr><td>风险清单</td><td>新 IP、新工艺、第三方 IP、没在 FPGA 上验证过的模块</td></tr>
+<tr><td>问题管理流程</td><td>Bug 分级、提交模板、<a class="t" href="#g-triage">Triage</a> 节奏、ECO 决策机制</td></tr>
+</table>
+
+<h4>样片怎么分</h4>
+<table>
+<tr><th>用途</th><th>建议</th><th>说明</th></tr>
+<tr><td>Bringup 主力</td><td>多组，每组 2–4 颗</td><td>软硬件团队各自独立推进，避免抢板</td></tr>
+<tr><td>破坏性 / 拉偏测试</td><td>少量</td><td>高压、高温可能损伤芯片</td></tr>
+<tr><td>功耗测量</td><td>覆盖 SS / TT / FF 代表片</td><td>需要知道每颗片的 corner，最好有 ATE 数据</td></tr>
+<tr><td>失效分析预留</td><td>若干</td><td>留给后续 <a class="t" href="#g-fa">FA</a></td></tr>
+<tr><td>软件开发</td><td>其余</td><td>驱动、OS 团队并行开发</td></tr>
+</table>
+
+<h3>2.2 板卡准备</h3>
+<p>验证板（Validation Board）和给客户的参考板（<a class="t" href="#g-evb">EVB</a>）不同，验证板要尽量“可观测、可调节”：</p>
+<ul>
+  <li>每路电源<b>独立可调</b>，或用可编程 PMIC；每路有<a class="t" href="#g-shunt">检流电阻</a>和测试点，支持外接电源替代 PMIC。</li>
+  <li>每路电源有跳线或 0Ω 电阻，可以单独断开，便于找短路和测电流。</li>
+  <li>时钟源可切换（板载<a class="t" href="#g-crystal">晶振</a>或外部信号源注入），关键时钟引出测试点。</li>
+  <li>复位和 Boot 模式用拨码开关加测试点，最好还能由继电器自动控制。</li>
+  <li>引出 JTAG/<a class="t" href="#g-swd">SWD</a>、UART、<a class="t" href="#g-trace">Trace</a> 口。</li>
+  <li>DDR 颗粒支持多家供应商；高速接口（PCIe/USB/<a class="t" href="#g-mipi">MIPI</a>/DDR）预留测量点。</li>
+  <li>通常同时准备 socket 版（方便换片）和直接焊接版（信号质量更好）。</li>
+</ul>
+<p>回片前要完成<b>空板上电检查</b>：不装芯片，检查<a class="t" href="#g-powerseq">上电时序</a>、电压值、纹波、有无短路。</p>
+
+<h3>2.3 FPGA / Emulator / 仿真平台预验证</h3>
+<table>
+<tr><th>平台</th><th>回片前要完成的工作</th></tr>
+<tr><td>RTL 仿真</td><td>BootROM 全流程、启动代码、关键 IP 寄存器访问用例</td></tr>
+<tr><td>Emulator（Palladium / Zebu / Veloce）</td><td>跑通 BootROM → <a class="t" href="#g-spl">SPL</a> → <a class="t" href="#g-uboot">U-Boot</a>（可选 Linux）；DDR 控制器配置序列</td></tr>
+<tr><td>FPGA 原型</td><td>驱动开发、OS 移植、测试框架调试——大多数软件在这里“预上硅”</td></tr>
+<tr><td>虚拟平台（QEMU / Fast Model）</td><td>早期软件架构和测试框架开发</td></tr>
+</table>
+<div class="box warn"><b>注意：</b>最后一轮软件预验证要用与最终<a class="t" href="#g-netlist">网表</a>一致的 RTL 版本；跑通的测试镜像要带版本号归档；提前整理“FPGA 与硅片的差异清单”（FPGA 上 DDR PHY、PLL、模拟 IP 往往是替代模型），这些模块的硅上代码要单独准备。</div>
+
+<h3>2.4 软件与工具准备</h3>
+<ul>
+  <li><b>调试工具链</b>：JTAG 调试器（Lauterbach TRACE32、ARM DSTREAM、Segger J-Link、OpenOCD）以及针对新芯片的调试脚本（CPU 拓扑、CoreSight ROM Table、内存映射），提前在 Emulator 上验证。</li>
+  <li><b>最小启动镜像</b>：UART 打印、内存读写测试、寄存器 dump 工具。</li>
+  <li><b>DDR 初始化代码</b>：<a class="t" href="#g-training">training</a> 参数和多套备选配置（降频、单 <a class="t" href="#g-rank">rank</a>、单通道）。</li>
+  <li><b>测试框架</b> + 自动化脚本 + 日志收集。</li>
+  <li><b>寄存器头文件</b>：从 IP-XACT / SystemRDL 自动生成，避免手写错误。</li>
+  <li><b>Bringup 手册</b>：上电步骤、各路预期电流、预期 UART 输出、出问题时的排查决策树。</li>
+</ul>
+
+<h3>2.5 ATE 与样片筛选</h3>
+<p><a class="t" href="#g-ate">ATE</a>（如 Advantest V93000、Teradyne UltraFLEX）会对每颗芯片做开短路测试、漏电（<a class="t" href="#g-iddq">IDDQ</a>）、<a class="t" href="#g-scan">Scan/ATPG</a>、<a class="t" href="#g-mbist">MBIST</a>、边界扫描，并初步测 Vmin/Fmax，给出 corner/bin 信息。</p>
+<div class="box tip"><b>为什么必须先筛片：</b>如果拿一颗有制造缺陷的芯片去 debug，会把“坏片”当成“设计 bug”，白白浪费几天甚至几周。每颗片都要有编号（<a class="t" href="#g-efuse">eFuse</a> chip ID 或丝印）和 ATE 结果，建立样片档案。</div>
+
+<h3>2.6 入口 / 出口标准</h3>
+<table>
+<tr><th style="width:80px">入口</th><td>流片完成；Spec、网表、寄存器手册冻结</td></tr>
+<tr><th>出口</th><td>测试计划已评审；空板检查通过；BootROM 和启动镜像在 Emulator/FPGA 跑通；JTAG 脚本就绪；问题跟踪流程建立；仪器、实验室、温箱已预约；样片分配方案确定</td></tr>
+</table>
+
+<!-- ============ 3 ============ -->
+<h2 id="s3">3. 阶段二：Bringup 点亮</h2>
+<p><a class="t" href="#g-bringup">Bringup</a> 的目标：让芯片“活过来”，能稳定执行代码、访问 DDR、被调试器控制。</p>
+
+<figure>
+<svg viewBox="0 0 960 450" role="img" aria-label="上电与 Bringup 启动时序">
+  <g font-size="12.5" fill="#334155">
+    <text x="10" y="54">VDD_IO</text>
+    <text x="10" y="94">VDD_CORE</text>
+    <text x="10" y="134">VDD_DDR / PLL</text>
+    <text x="10" y="174">晶振 OSC 24MHz</text>
+    <text x="10" y="214">PLL_LOCK</text>
+    <text x="10" y="254">PLL 输出时钟</text>
+    <text x="10" y="294">nRESET（复位）</text>
+    <text x="10" y="334">JTAG 可连接</text>
+    <text x="10" y="374">CPU 执行</text>
+  </g>
+  <g stroke="#cbd5e1" stroke-dasharray="3 4">
+    <line x1="180" y1="30" x2="180" y2="390"/><line x1="260" y1="30" x2="260" y2="390"/>
+    <line x1="340" y1="30" x2="340" y2="390"/><line x1="430" y1="30" x2="430" y2="390"/>
+    <line x1="500" y1="30" x2="500" y2="390"/><line x1="580" y1="30" x2="580" y2="390"/>
+    <line x1="700" y1="30" x2="700" y2="390"/><line x1="820" y1="30" x2="820" y2="390"/>
+  </g>
+  <g font-size="11.5" fill="#64748b" text-anchor="middle">
+    <text x="180" y="24">t0</text><text x="260" y="24">t1</text><text x="340" y="24">t2</text><text x="430" y="24">t3</text>
+    <text x="500" y="24">t4</text><text x="580" y="24">t5</text><text x="700" y="24">t6</text><text x="820" y="24">t7</text>
+  </g>
+  <g fill="none" stroke-width="2.2">
+    <path d="M140 58 H180 L192 42 H950" stroke="#f59e0b"/>
+    <path d="M140 98 H260 L272 82 H950" stroke="#f59e0b"/>
+    <path d="M140 138 H340 L352 122 H950" stroke="#f59e0b"/>
+    <path d="M140 170 H350 L350,170.0 L351,170.0 L352,169.9 L353,169.9 L354,169.9 L355,170.1 L356,170.2 L357,170.3 L358,170.3 L359,170.0 L360,169.6 L361,169.3 L362,169.3 L363,169.7 L364,170.3 L365,170.9 L366,171.2 L367,170.8 L368,170.0 L369,169.0 L370,168.4 L371,168.5 L372,169.3 L373,170.7 L374,171.9 L375,172.3 L376,171.6 L377,170.0 L378,168.2 L379,167.2 L380,167.4 L381,168.9 L382,171.1 L383,173.0 L384,173.6 L385,172.5 L386,170.0 L387,167.3 L388,165.7 L389,166.1 L390,168.4 L391,171.7 L392,174.4 L393,175.1 L394,173.5 L395,170.0 L396,166.3 L397,164.1 L398,164.7 L399,167.8 L400,172.2 L401,175.8 L402,176.8 L403,174.6 L404,170.0 L405,165.2 L406,162.4 L407,163.1 L408,167.2 L409,172.9 L410,177.4 L411,178.7 L412,175.8 L413,170.0 L414,163.9 L415,160.5 L416,161.4 L417,166.5 L418,173.5 L419,179.2 L420,180.7 L421,177.1 L422,170.0 L423,162.6 L424,158.4 L425,159.6 L426,165.9 L427,174.1 L428,180.4 L429,181.8 L430,177.7 L431,170.0 L432,162.3 L433,158.2 L434,159.6 L435,165.9 L436,174.1 L437,180.4 L438,181.8 L439,177.7 L440,170.0 L441,162.3 L442,158.2 L443,159.6 L444,165.9 L445,174.1 L446,180.4 L447,181.8 L448,177.7 L449,170.0 L450,162.3 L451,158.2 L452,159.6 L453,165.9 L454,174.1 L455,180.4 L456,181.8 L457,177.7 L458,170.0 L459,162.3 L460,158.2 L461,159.6 L462,165.9 L463,174.1 L464,180.4 L465,181.8 L466,177.7 L467,170.0 L468,162.3 L469,158.2 L470,159.6 L471,165.9 L472,174.1 L473,180.4 L474,181.8 L475,177.7 L476,170.0 L477,162.3 L478,158.2 L479,159.6 L480,165.9 L481,174.1 L482,180.4 L483,181.8 L484,177.7 L485,170.0 L486,162.3 L487,158.2 L488,159.6 L489,165.9 L490,174.1 L491,180.4 L492,181.8 L493,177.7 L494,170.0 L495,162.3 L496,158.2 L497,159.6 L498,165.9 L499,174.1 L500,180.4 L501,181.8 L502,177.7 L503,170.0 L504,162.3 L505,158.2 L506,159.6 L507,165.9 L508,174.1 L509,180.4 L510,181.8 L511,177.7 L512,170.0 L513,162.3 L514,158.2 L515,159.6 L516,165.9 L517,174.1 L518,180.4 L519,181.8 L520,177.7 L521,170.0 L522,162.3 L523,158.2 L524,159.6 L525,165.9 L526,174.1 L527,180.4 L528,181.8 L529,177.7 L530,170.0 L531,162.3 L532,158.2 L533,159.6 L534,165.9 L535,174.1 L536,180.4 L537,181.8 L538,177.7 L539,170.0 L540,162.3 L541,158.2 L542,159.6 L543,165.9 L544,174.1 L545,180.4 L546,181.8 L547,177.7 L548,170.0 L549,162.3 L550,158.2 L551,159.6 L552,165.9 L553,174.1 L554,180.4 L555,181.8 L556,177.7 L557,170.0 L558,162.3 L559,158.2 L560,159.6 L561,165.9 L562,174.1 L563,180.4 L564,181.8 L565,177.7 L566,170.0 L567,162.3 L568,158.2 L569,159.6 L570,165.9 L571,174.1 L572,180.4 L573,181.8 L574,177.7 L575,170.0 L576,162.3 L577,158.2 L578,159.6 L579,165.9 L580,174.1 L581,180.4 L582,181.8 L583,177.7 L584,170.0 L585,162.3 L586,158.2 L587,159.6 L588,165.9 L589,174.1 L590,180.4 L591,181.8 L592,177.7 L593,170.0 L594,162.3 L595,158.2 L596,159.6 L597,165.9 L598,174.1 L599,180.4 L600,181.8 L601,177.7 L602,170.0 L603,162.3 L604,158.2 L605,159.6 L606,165.9 L607,174.1 L608,180.4 L609,181.8 L610,177.7 L611,170.0 L612,162.3 L613,158.2 L614,159.6 L615,165.9 L616,174.1 L617,180.4 L618,181.8 L619,177.7 L620,170.0 L621,162.3 L622,158.2 L623,159.6 L624,165.9 L625,174.1 L626,180.4 L627,181.8 L628,177.7 L629,170.0 L630,162.3 L631,158.2 L632,159.6 L633,165.9 L634,174.1 L635,180.4 L636,181.8 L637,177.7 L638,170.0 L639,162.3 L640,158.2 L641,159.6 L642,165.9 L643,174.1 L644,180.4 L645,181.8 L646,177.7 L647,170.0 L648,162.3 L649,158.2 L650,159.6 L651,165.9 L652,174.1 L653,180.4 L654,181.8 L655,177.7 L656,170.0 L657,162.3 L658,158.2 L659,159.6 L660,165.9 L661,174.1 L662,180.4 L663,181.8 L664,177.7 L665,170.0 L666,162.3 L667,158.2 L668,159.6 L669,165.9 L670,174.1 L671,180.4 L672,181.8 L673,177.7 L674,170.0 L675,162.3 L676,158.2 L677,159.6 L678,165.9 L679,174.1 L680,180.4 L681,181.8 L682,177.7 L683,170.0 L684,162.3 L685,158.2 L686,159.6 L687,165.9 L688,174.1 L689,180.4 L690,181.8 L691,177.7 L692,170.0 L693,162.3 L694,158.2 L695,159.6 L696,165.9 L697,174.1 L698,180.4 L699,181.8 L700,177.7 L701,170.0 L702,162.3 L703,158.2 L704,159.6 L705,165.9 L706,174.1 L707,180.4 L708,181.8 L709,177.7 L710,170.0 L711,162.3 L712,158.2 L713,159.6 L714,165.9 L715,174.1 L716,180.4 L717,181.8 L718,177.7 L719,170.0 L720,162.3 L721,158.2 L722,159.6 L723,165.9 L724,174.1 L725,180.4 L726,181.8 L727,177.7 L728,170.0 L729,162.3 L730,158.2 L731,159.6 L732,165.9 L733,174.1 L734,180.4 L735,181.8 L736,177.7 L737,170.0 L738,162.3 L739,158.2 L740,159.6 L741,165.9 L742,174.1 L743,180.4 L744,181.8 L745,177.7 L746,170.0 L747,162.3 L748,158.2 L749,159.6 L750,165.9 L751,174.1 L752,180.4 L753,181.8 L754,177.7 L755,170.0 L756,162.3 L757,158.2 L758,159.6 L759,165.9 L760,174.1 L761,180.4 L762,181.8 L763,177.7 L764,170.0 L765,162.3 L766,158.2 L767,159.6 L768,165.9 L769,174.1 L770,180.4 L771,181.8 L772,177.7 L773,170.0 L774,162.3 L775,158.2 L776,159.6 L777,165.9 L778,174.1 L779,180.4 L780,181.8 L781,177.7 L782,170.0 L783,162.3 L784,158.2 L785,159.6 L786,165.9 L787,174.1 L788,180.4 L789,181.8 L790,177.7 L791,170.0 L792,162.3 L793,158.2 L794,159.6 L795,165.9 L796,174.1 L797,180.4 L798,181.8 L799,177.7 L800,170.0 L801,162.3 L802,158.2 L803,159.6 L804,165.9 L805,174.1 L806,180.4 L807,181.8 L808,177.7 L809,170.0 L810,162.3 L811,158.2 L812,159.6 L813,165.9 L814,174.1 L815,180.4 L816,181.8 L817,177.7 L818,170.0 L819,162.3 L820,158.2 L821,159.6 L822,165.9 L823,174.1 L824,180.4 L825,181.8 L826,177.7 L827,170.0 L828,162.3 L829,158.2 L830,159.6 L831,165.9 L832,174.1 L833,180.4 L834,181.8 L835,177.7 L836,170.0 L837,162.3 L838,158.2 L839,159.6 L840,165.9 L841,174.1 L842,180.4 L843,181.8 L844,177.7 L845,170.0 L846,162.3 L847,158.2 L848,159.6 L849,165.9 L850,174.1 L851,180.4 L852,181.8 L853,177.7 L854,170.0 L855,162.3 L856,158.2 L857,159.6 L858,165.9 L859,174.1 L860,180.4 L861,181.8 L862,177.7 L863,170.0 L864,162.3 L865,158.2 L866,159.6 L867,165.9 L868,174.1 L869,180.4 L870,181.8 L871,177.7 L872,170.0 L873,162.3 L874,158.2 L875,159.6 L876,165.9 L877,174.1 L878,180.4 L879,181.8 L880,177.7 L881,170.0 L882,162.3 L883,158.2 L884,159.6 L885,165.9 L886,174.1 L887,180.4 L888,181.8 L889,177.7 L890,170.0 L891,162.3 L892,158.2 L893,159.6 L894,165.9 L895,174.1 L896,180.4 L897,181.8 L898,177.7 L899,170.0 L900,162.3 L901,158.2 L902,159.6 L903,165.9 L904,174.1 L905,180.4 L906,181.8 L907,177.7 L908,170.0 L909,162.3 L910,158.2 L911,159.6 L912,165.9 L913,174.1 L914,180.4 L915,181.8 L916,177.7 L917,170.0 L918,162.3 L919,158.2 L920,159.6 L921,165.9 L922,174.1 L923,180.4 L924,181.8 L925,177.7 L926,170.0 L927,162.3 L928,158.2 L929,159.6 L930,165.9 L931,174.1 L932,180.4 L933,181.8 L934,177.7 L935,170.0 L936,162.3 L937,158.2 L938,159.6 L939,165.9 L940,174.1 L941,180.4 L942,181.8 L943,177.7 L944,170.0 L945,162.3 L946,158.2 L947,159.6 L948,165.9 L949,174.1 L950,180.4" stroke="#0ea5e9" stroke-width="1.4"/>
+    <path d="M140 218 H500 V198 H950" stroke="#8b5cf6"/>
+    <path d="M140 258 H430" stroke="#94a3b8"/>
+    <path d="M430 258 V240 H439.0 V258 H447.1 V240 H456.9 V258 H465.7 V240 H473.6 V258 H478.3 V240 H482.4 V258 H486.2 V240 H492.1 V258 H497.4 V240 H499.9 V258 H500.0" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="3 2"/>
+    <path d="M500 258 V240 H503.5 V258 H507.0 V240 H510.5 V258 H514.0 V240 H517.5 V258 H521.0 V240 H524.5 V258 H528.0 V240 H531.5 V258 H535.0 V240 H538.5 V258 H542.0 V240 H545.5 V258 H549.0 V240 H552.5 V258 H556.0 V240 H559.5 V258 H563.0 V240 H566.5 V258 H570.0 V240 H573.5 V258 H577.0 V240 H580.5 V258 H584.0 V240 H587.5 V258 H591.0 V240 H594.5 V258 H598.0 V240 H601.5 V258 H605.0 V240 H608.5 V258 H612.0 V240 H615.5 V258 H619.0 V240 H622.5 V258 H626.0 V240 H629.5 V258 H633.0 V240 H636.5 V258 H640.0 V240 H643.5 V258 H647.0 V240 H650.5 V258 H654.0 V240 H657.5 V258 H661.0 V240 H664.5 V258 H668.0 V240 H671.5 V258 H675.0 V240 H678.5 V258 H682.0 V240 H685.5 V258 H689.0 V240 H692.5 V258 H696.0 V240 H699.5 V258 H703.0 V240 H706.5 V258 H710.0 V240 H713.5 V258 H717.0 V240 H720.5 V258 H724.0 V240 H727.5 V258 H731.0 V240 H734.5 V258 H738.0 V240 H741.5 V258 H745.0 V240 H748.5 V258 H752.0 V240 H755.5 V258 H759.0 V240 H762.5 V258 H766.0 V240 H769.5 V258 H773.0 V240 H776.5 V258 H780.0 V240 H783.5 V258 H787.0 V240 H790.5 V258 H794.0 V240 H797.5 V258 H801.0 V240 H804.5 V258 H808.0 V240 H811.5 V258 H815.0 V240 H818.5 V258 H822.0 V240 H825.5 V258 H829.0 V240 H832.5 V258 H836.0 V240 H839.5 V258 H843.0 V240 H846.5 V258 H850.0 V240 H853.5 V258 H857.0 V240 H860.5 V258 H864.0 V240 H867.5 V258 H871.0 V240 H874.5 V258 H878.0 V240 H881.5 V258 H885.0 V240 H888.5 V258 H892.0 V240 H895.5 V258 H899.0 V240 H902.5 V258 H906.0 V240 H909.5 V258 H913.0 V240 H916.5 V258 H920.0 V240 H923.5 V258 H927.0 V240 H930.5 V258 H934.0 V240 H937.5 V258 H941.0 V240 H944.5 V258 H948.0 V240 H950.0" stroke="#7c3aed" stroke-width="1.3"/>
+    <path d="M140 298 H580 V278 H950" stroke="#ef4444"/>
+    <path d="M140 338 H586 V318 H950" stroke="#10b981"/>
+  </g>
+  <g font-size="10.5">
+    <text x="352" y="153" fill="#0369a1">起振：幅度逐渐增大</text>
+    <text x="470" y="153" fill="#0369a1">振荡稳定（正弦波）</text>
+    <text x="507" y="194" fill="#6d28d9">锁定标志拉高</text>
+    <text x="426" y="250" fill="#64748b" text-anchor="end">PLL 使能，锁定中（频率漂移）→</text>
+    <text x="507" y="236" fill="#6d28d9">锁定后：稳定的倍频时钟（如 24MHz × 50 = 1.2GHz，示意）</text>
+    <text x="590" y="274" fill="#b91c1c">复位释放</text>
+  </g>
+  <g font-size="11.5" text-anchor="middle">
+    <rect x="580" y="356" width="120" height="28" fill="#dcfce7" stroke="#16a34a"/><text x="640" y="375">BootROM</text>
+    <rect x="700" y="356" width="120" height="28" fill="#fef9c3" stroke="#ca8a04"/><text x="760" y="368">SPL：PLL 提频</text><text x="760" y="380" font-size="10">DDR training</text>
+    <rect x="820" y="356" width="130" height="28" fill="#ffedd5" stroke="#ea580c"/><text x="885" y="368">加载 U-Boot /</text><text x="885" y="380" font-size="10">测试程序</text>
+  </g>
+  <g font-size="12" fill="#1f2937">
+    <text x="20" y="418">① t0–t2：按 Spec 顺序逐路上电（通常 IO → Core → DDR/模拟），每路用限流电源并记录电流；② t2–t3：晶振起振直至幅度稳定；</text>
+    <text x="20" y="438">③ t3–t4：PLL 使能后经过一段锁定时间，频率收敛后 PLL_LOCK 拉高；④ t5：电源、时钟都稳定后释放复位，CPU 从 BootROM 开始执行，调试器可连接。</text>
+  </g>
+</svg>
+<figcaption><b>图 2：上电与 Bringup 启动时序。</b>黄色是电源轨，按 Spec 规定的<a class="t" href="#g-powerseq">上电时序</a>依次上升；蓝色是晶振输出：起振时幅度从零逐渐增大，稳定后是固定频率的正弦波；<a class="t" href="#g-pll">PLL</a> 使能后先经历一段频率漂移的锁定过程（灰色虚线，这段时钟通常被门控、不送给 CPU），频率收敛后 PLL_LOCK 拉高，之后输出稳定的倍频时钟（紫色，频率远高于晶振）；红色是复位信号（低有效，拉高表示释放，见 <a class="t" href="#g-por">POR</a>）。复位释放后 CPU 开始执行 <a class="t" href="#g-bootrom">BootROM</a>，再由 <a class="t" href="#g-spl">SPL</a> 完成提频和 <a class="t" href="#g-training">DDR training</a>，最后加载下一级程序。Bringup 卡在哪一步，就在这张图上对应的信号上找原因。</figcaption>
+</figure>
+
+<h3>3.1 Bringup 步骤总览</h3>
+<table>
+<tr><th>#</th><th>步骤</th><th>做什么</th><th>成功标志</th></tr>
+<tr><td>1</td><td>目检与阻抗检查</td><td>看焊接、方向；测每路电源对地阻抗</td><td>无短路，与空板/同批板一致</td></tr>
+<tr><td>2</td><td>限流逐路上电</td><td>可调电源设限流，按时序逐路上电</td><td>电压正常，电流在预期范围</td></tr>
+<tr><td>3</td><td>时钟检查</td><td>看晶振起振、PLL 锁定</td><td>测试点 / <a class="t" href="#g-clkout">CLKOUT</a> 上看到正确频率</td></tr>
+<tr><td>4</td><td>复位检查</td><td>POR、复位释放时序</td><td>复位按预期释放</td></tr>
+<tr><td>5</td><td>JTAG 连通</td><td>读 <a class="t" href="#g-tap">IDCODE</a>、扫描 DAP/CoreSight</td><td>能识别所有 TAP 和 CPU 核</td></tr>
+<tr><td>6</td><td>BootROM 执行</td><td>JTAG 看 PC 指针，看 UART 输出</td><td>打印/状态寄存器符合预期</td></tr>
+<tr><td>7</td><td>SRAM 加载执行</td><td>JTAG 下载代码到片上 <a class="t" href="#g-sram">SRAM</a> 运行</td><td>自己的代码能跑，UART 有打印</td></tr>
+<tr><td>8</td><td>PLL 配置</td><td>软件配置 PLL 提频</td><td>CPU/总线频率正确</td></tr>
+<tr><td>9</td><td>DDR 初始化与 training</td><td>运行 DDR init + training</td><td>training 通过，内存测试通过</td></tr>
+<tr><td>10</td><td>从外部存储启动</td><td>eMMC / SPI NOR / USB / UART 下载启动</td><td>完整启动流程跑通</td></tr>
+</table>
+
+<h3>3.2 上电</h3>
+<ol class="steps">
+  <li>测量各电源网络对地阻抗，与参考值比较（同批板子互相对比）。</li>
+  <li>用可调电源并<b>设置限流</b>（一般为预期电流的 1.5–2 倍），逐路上电，盯着电流表。</li>
+  <li>有 PMIC 的板子，先断开 PMIC 输出、用外接电源验证，再切回 PMIC。</li>
+  <li>严格按 Spec 的上电时序操作，注意 IO 电源与核心电源的先后关系。</li>
+  <li>记录每路电源在复位状态下的电流——这是后续判断异常和静态功耗的<b>基线</b>。</li>
+  <li>用热像仪或手背感觉是否有异常发热点。</li>
+</ol>
+<table>
+<tr><th>现象</th><th>可能原因</th><th>排查手段</th></tr>
+<tr><td>某路电流过大/短路</td><td>焊接短路、芯片损坏、封装问题、IO 冲突</td><td>测阻抗、热像仪找热点、换片对比、X-ray</td></tr>
+<tr><td>电流偏大但没短路</td><td>某电源域没进复位态、IO 浮空、FF 片<a class="t" href="#g-leakage">漏电</a>大</td><td>对比 ATE IDDQ 数据、检查 IO 上下拉</td></tr>
+<tr><td>电压跌落</td><td>电源能力不足、线损、去耦电容不足</td><td>示波器看纹波和跌落、使用远端采样（remote sense）</td></tr>
+<tr><td>上电后芯片发烫</td><td>电源反接、时序错误导致<a class="t" href="#g-latchup">闩锁</a></td><td>立即断电，检查时序，换片</td></tr>
+</table>
+
+<h3>3.3 时钟与复位</h3>
+<ul>
+  <li><b>时钟</b>：示波器确认晶振起振、幅度和频率；怀疑晶振时用信号源注入外部时钟。通过 CLKOUT 引脚输出各 PLL 分频后的时钟来测量；用 JTAG 读 PLL lock 状态寄存器。PLL 锁不上：查参考时钟、PLL 电源（通常是对噪声敏感的独立模拟电源）、配置参数。</li>
+  <li><b>复位</b>：确认上电复位、外部复位引脚、<a class="t" href="#g-wdt">看门狗</a>复位都正常；读<b>复位原因寄存器</b>（后续查死机原因非常有用）。</li>
+  <li><b>常见坑</b>：复位释放过早（电源还没稳）、某模块复位极性和 Spec 不一致、复位同步器没有时钟。</li>
+</ul>
+
+<h3>3.4 JTAG / 调试链路</h3>
+<ol class="steps">
+  <li>读 <a class="t" href="#g-tap">IDCODE</a>，确认 JTAG 链的拓扑（多个 TAP 级联时要知道各自的指令寄存器长度）。</li>
+  <li>访问 <a class="t" href="#g-dap">DAP</a>，扫描 <a class="t" href="#g-coresight">CoreSight</a> ROM Table，识别所有核、<a class="t" href="#g-trace">ETM</a>、<a class="t" href="#g-cti">CTI</a> 等组件。</li>
+  <li>暂停（halt）CPU 核、读写寄存器、读写 SRAM、单步执行。</li>
+</ol>
+<table>
+<tr><th>现象</th><th>可能原因</th><th>处理</th></tr>
+<tr><td>读不到 IDCODE</td><td>电平不匹配、TCK 频率太高、TRST 没释放、调试电源域没上电、JTAG 被 eFuse 锁定</td><td>TCK 降到 1MHz 以下、检查 VTref、确认安全状态</td></tr>
+<tr><td>能连 DAP 但 halt 不了核</td><td>核没上电/在复位中/时钟被关、调试授权信号没使能</td><td>检查电源域、<a class="t" href="#g-pmu-power">PMU</a> 状态、授权信号</td></tr>
+<tr><td>连接时断时续</td><td>线太长、信号完整性、接地问题</td><td>缩短线缆、改善接地</td></tr>
+<tr><td>访问某地址后总线挂死</td><td>访问了没上电/没开时钟的模块</td><td>记录地址；通过 <a class="t" href="#g-memap">MEM-AP</a> 直接访问绕过 CPU</td></tr>
+</table>
+<div class="box tip"><b>救命通道：</b>芯片设计时一定要保留“调试器通过 MEM-AP / AXI-AP 直接访问系统总线”的能力。CPU 跑飞或挂死时，调试器仍能读写内存和寄存器。</div>
+
+<h3>3.5 BootROM</h3>
+<p><a class="t" href="#g-bootrom">BootROM</a> 固化在芯片里、无法修改，有 bug 只能 ECO 或换 Boot 模式绕过，所以回片前必须充分仿真。Bringup 时要验证：</p>
+<ul>
+  <li>各种 <a class="t" href="#g-bootmode">Boot 模式</a>：eMMC / SD / SPI NOR / NAND / UFS / USB 下载 / UART 下载 / PCIe。</li>
+  <li><a class="t" href="#g-secureboot">Secure Boot</a>：签名校验、镜像解密、eFuse 读取。<b>务必在未烧写 eFuse 的样片上测试，避免锁死。</b></li>
+  <li>错误处理：主镜像失败时能否切到备份镜像。</li>
+  <li>BootROM 要有 UART 打印或状态码，否则卡住时很难定位。卡住时用 JTAG halt 看 PC，对照 ROM 符号表判断卡在哪一步。</li>
+</ul>
+
+<h3>3.6 DDR 初始化与 Training</h3>
+<p>DDR 是 Bringup 中<b>最常见、最耗时</b>的卡点。</p>
+<div class="box analogy"><b>打个比方：</b>CPU 和 DDR 颗粒之间有几十根高速信号线，每根线因为走线长度、芯片个体差异，信号到达的时间都略有不同。<a class="t" href="#g-training">Training</a> 就像合唱团开唱前调音：逐根线扫描延迟和电压门限，找到每根线“最清楚”的采样点（<a class="t" href="#g-eye">眼图</a>中心），把参数记下来。</div>
+<ol class="steps">
+  <li><a class="t" href="#g-phy">PHY</a> 和控制器上电、配置时钟。</li>
+  <li>加载控制器/PHY 寄存器配置（时序参数要与颗粒 datasheet 匹配）。</li>
+  <li>执行 training：ZQ 校准 → Write Leveling → Read Gate → 读写眼图训练 → <a class="t" href="#g-vref">Vref</a> 训练 → CA 训练（LPDDR4/5）。</li>
+  <li>跑内存测试验证。</li>
+</ol>
+<table>
+<tr><th>Debug 手段（由简到繁）</th><th>说明</th></tr>
+<tr><td>降频</td><td>先跑最低频率，通了再逐档提频</td></tr>
+<tr><td>降配置</td><td>单通道、单 rank、半位宽、关 <a class="t" href="#g-ecc">ECC</a></td></tr>
+<tr><td>打印 training 结果</td><td>每个 byte lane 的延迟值、眼宽、Vref，找离群的 lane</td></tr>
+<tr><td>2D 眼图扫描</td><td>时序 × Vref 二维扫描，找裕量不足的信号</td></tr>
+<tr><td>示波器 + 探头</td><td>测 DQ/DQS/CK 波形、<a class="t" href="#g-odt">ODT</a> 效果、过冲振铃</td></tr>
+<tr><td>换颗粒/换板</td><td>区分颗粒兼容性、板级问题、芯片问题</td></tr>
+<tr><td>对比 Emulator 配置</td><td>确认寄存器配置序列与 Emulator 上一致</td></tr>
+</table>
+<p>常用内存测试：Walking 1/0、地址线测试、数据线测试、<a class="t" href="#g-memtest">March C-</a>、随机数据、<code>memtester</code>、<code>stressapptest</code>。</p>
+
+<h3>3.7 入口 / 出口标准</h3>
+<table>
+<tr><th style="width:80px">入口</th><td>样片经 ATE 筛选；空板检查通过；Bringup 手册、JTAG 脚本、启动镜像就绪</td></tr>
+<tr><th>出口</th><td>所有电源域正常；所有 PLL 可锁定并配置到目标频率；JTAG 可访问所有核；至少一种 Boot 模式能启动；DDR 在目标频率（或明确的降级频率）training 通过并通过内存测试；UART 控制台可用；问题都已记录并有负责人</td></tr>
+</table>
+
+<!-- ============ 4 ============ -->
+<h2 id="s4">4. 阶段三：Bare Metal 裸机测试</h2>
+<p><a class="t" href="#g-baremetal">裸机测试</a>指<b>不跑操作系统</b>，测试程序直接读写硬件寄存器来验证各模块。好处是可控、可复现、容易定位，也最接近 pre-silicon 的测试环境。</p>
+
+<figure>
+<svg viewBox="0 0 1000 550" role="img" aria-label="裸机测试时芯片内部数据流">
+  <defs><marker id="j1" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ea580c"/></marker><marker id="j2" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker><marker id="j3" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="j4" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/></marker><marker id="j5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="j6" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs>
+  <rect x="10" y="50" width="95" height="400" rx="6" fill="#e0e7ff" stroke="#6366f1"/>
+  <text x="57.5" y="247.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2937">主机 PC</text>
+  <text x="57.5" y="264.0" text-anchor="middle" font-size="11" fill="#1f2937">下载 / 判定</text>
+  <rect x="125" y="195" width="110" height="70" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="180.0" y="227.0" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">JTAG 调试器</text>
+  <text x="180.0" y="244.0" text-anchor="middle" font-size="11" fill="#1f2937">下载 / 读内存</text>
+  <rect x="255" y="30" width="590" height="460" rx="14" fill="#f8fafc" stroke="#334155" stroke-width="1.5"/>
+  <text x="835" y="50" text-anchor="end" font-size="13" font-weight="700" fill="#334155">SoC 内部</text>
+  <rect x="275" y="60" width="115" height="55" rx="6" fill="#fff" stroke="#64748b"/>
+  <text x="332.5" y="84.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1f2937">中断控制器</text>
+  <text x="332.5" y="101.5" text-anchor="middle" font-size="11" fill="#1f2937">GIC / PLIC</text>
+  <rect x="420" y="55" width="180" height="90" rx="6" fill="#dbeafe" stroke="#2563eb"/>
+  <text x="510.0" y="97.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2937">CPU 核</text>
+  <text x="510.0" y="114.0" text-anchor="middle" font-size="11" fill="#1f2937">取指 / 执行 / Cache</text>
+  <rect x="640" y="55" width="180" height="90" rx="6" fill="#f3e8ff" stroke="#7c3aed"/>
+  <text x="730.0" y="97.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2937">DMA 控制器</text>
+  <text x="730.0" y="114.0" text-anchor="middle" font-size="11" fill="#1f2937">不占用 CPU 搬运数据</text>
+  <rect x="275" y="195" width="115" height="70" rx="6" fill="#ede9fe" stroke="#7c3aed"/>
+  <text x="332.5" y="227.0" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">DAP</text>
+  <text x="332.5" y="244.0" text-anchor="middle" font-size="11" fill="#1f2937">MEM-AP</text>
+  <rect x="410" y="200" width="420" height="70" rx="6" fill="#fef3c7" stroke="#ca8a04"/>
+  <text x="666" y="258" text-anchor="middle" font-size="12" font-weight="700" fill="#92400e">总线 / 互联（NoC）</text>
+  <rect x="420" y="330" width="130" height="75" rx="6" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="485.0" y="364.5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">片上 SRAM</text>
+  <text x="485.0" y="381.5" text-anchor="middle" font-size="11" fill="#1f2937">测试程序 / 数据</text>
+  <rect x="570" y="330" width="110" height="75" rx="6" fill="#ccfbf1" stroke="#0d9488"/>
+  <text x="625.0" y="364.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1f2937">外设寄存器</text>
+  <text x="625.0" y="381.5" text-anchor="middle" font-size="11" fill="#1f2937">UART/SPI/定时器</text>
+  <rect x="700" y="330" width="130" height="75" rx="6" fill="#fef3c7" stroke="#d97706"/>
+  <text x="765.0" y="364.5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">DDR 控制器</text>
+  <text x="765.0" y="381.5" text-anchor="middle" font-size="11" fill="#1f2937">+ PHY</text>
+  <rect x="865" y="330" width="125" height="75" rx="6" fill="#fff" stroke="#d97706"/>
+  <text x="927.5" y="364.5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">DDR 颗粒</text>
+  <text x="927.5" y="381.5" text-anchor="middle" font-size="11" fill="#1f2937">（片外）</text>
+  <rect x="865" y="445" width="125" height="50" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="927.5" y="475.0" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">USB 转串口</text>
+  <path d="M830 367 H865" stroke="#d97706" stroke-width="6"/>
+  <!-- ① 下载 -->
+  <path d="M105 215 H123" fill="none" stroke="#fff" stroke-width="6.4"/><path d="M105 215 H123" fill="none" stroke="#ea580c" stroke-width="2.4" marker-end="url(#j1)"/>
+  <path d="M235 215 H273" fill="none" stroke="#fff" stroke-width="6.4"/><path d="M235 215 H273" fill="none" stroke="#ea580c" stroke-width="2.4" marker-end="url(#j1)"/>
+  <path d="M390 215 H500 V328" fill="none" stroke="#fff" stroke-width="6.4"/><path d="M390 215 H500 V328" fill="none" stroke="#ea580c" stroke-width="2.4" marker-end="url(#j1)"/>
+  <circle cx="255" cy="205" r="10" fill="#ea580c" stroke="#fff" stroke-width="1.5"/><text x="255" y="209" fill="#fff" font-size="12" text-anchor="middle" font-weight="700">1</text>
+  <!-- ② 取指 -->
+  <path d="M530 330 V147" fill="none" stroke="#fff" stroke-width="6.4"/><path d="M530 330 V147" fill="none" stroke="#2563eb" stroke-width="2.4" marker-end="url(#j2)"/>
+  <circle cx="530" cy="300" r="10" fill="#2563eb" stroke="#fff" stroke-width="1.5"/><text x="530" y="304" fill="#fff" font-size="12" text-anchor="middle" font-weight="700">2</text>
+  <!-- ③ 配置外设与 DMA -->
+  <path d="M590 145 V328" fill="none" stroke="#fff" stroke-width="6.4"/><path d="M590 145 V328" fill="none" stroke="#16a34a" stroke-width="2.4" marker-end="url(#j3)"/>
+  <path d="M590 222 H660 V147" fill="none" stroke="#fff" stroke-width="6.4"/><path d="M590 222 H660 V147" fill="none" stroke="#16a34a" stroke-width="2.4" marker-end="url(#j3)"/>
+  <circle cx="590" cy="222" r="3.5" fill="#16a34a"/>
+  <circle cx="590" cy="300" r="10" fill="#16a34a" stroke="#fff" stroke-width="1.5"/><text x="590" y="304" fill="#fff" font-size="12" text-anchor="middle" font-weight="700">3</text>
+  <!-- ④ DMA 搬运 -->
+  <path d="M740 330 V147" fill="none" stroke="#fff" stroke-width="6.4"/><path d="M740 330 V147" fill="none" stroke="#7c3aed" stroke-width="2.4" marker-end="url(#j4)"/>
+  <path d="M790 145 V328" fill="none" stroke="#fff" stroke-width="6.4"/><path d="M790 145 V328" fill="none" stroke="#7c3aed" stroke-width="2.4" marker-end="url(#j4)"/>
+  <circle cx="765" cy="300" r="10" fill="#7c3aed" stroke="#fff" stroke-width="1.5"/><text x="765" y="304" fill="#fff" font-size="12" text-anchor="middle" font-weight="700">4</text>
+  <text x="745" y="170" font-size="10.5" fill="#7c3aed">读源区</text>
+  <text x="795" y="318" font-size="10.5" fill="#7c3aed">写目的区</text>
+  <!-- ⑤ 中断（虚线 = 控制信号） -->
+  <path d="M730 55 V40 H332 V58" fill="none" stroke="#64748b" stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#j5)"/>
+  <path d="M390 100 H418" fill="none" stroke="#64748b" stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#j5)"/>
+  <circle cx="530" cy="40" r="10" fill="#64748b" stroke="#fff" stroke-width="1.5"/><text x="530" y="44" fill="#fff" font-size="12" text-anchor="middle" font-weight="700">5</text>
+  <!-- ⑥ 上报 -->
+  <path d="M625 405 V470 H863" fill="none" stroke="#fff" stroke-width="6.4"/><path d="M625 405 V470 H863" fill="none" stroke="#dc2626" stroke-width="2.4" marker-end="url(#j6)"/>
+  <path d="M927 495 V530 H57 V452" fill="none" stroke="#fff" stroke-width="6.4"/><path d="M927 495 V530 H57 V452" fill="none" stroke="#dc2626" stroke-width="2.4" marker-end="url(#j6)"/>
+  <path d="M450 330 V250 H392" fill="none" stroke="#fff" stroke-width="6"/><path d="M450 330 V250 H392" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#j6)"/>
+  <path d="M275 250 H237" fill="none" stroke="#fff" stroke-width="6"/><path d="M275 250 H237" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#j6)"/>
+  <path d="M125 250 H107" fill="none" stroke="#fff" stroke-width="6"/><path d="M125 250 H107" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#j6)"/>
+  <circle cx="700" cy="470" r="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/><text x="700" y="474" fill="#fff" font-size="12" text-anchor="middle" font-weight="700">6</text><circle cx="255" cy="260" r="10" fill="#dc2626" stroke="#fff" stroke-width="1.5"/><text x="255" y="264" fill="#fff" font-size="12" text-anchor="middle" font-weight="700">6</text>
+  <!-- 图例 -->
+  <g font-size="11.5" fill="#334155">
+    <line x1="275" y1="430" x2="305" y2="430" stroke="#334155" stroke-width="2.4"/><text x="312" y="434">实线箭头：数据流（编号 = 步骤）</text>
+    <line x1="275" y1="452" x2="305" y2="452" stroke="#64748b" stroke-width="1.6" stroke-dasharray="5 3"/><text x="312" y="456">虚线箭头：中断等控制信号</text>
+    <line x1="275" y1="474" x2="305" y2="474" stroke="#d97706" stroke-width="6"/><text x="312" y="478">粗线：片外 DDR 总线</text>
+  </g>
+</svg>
+<figcaption><b>图 3：裸机测试时芯片内部的数据流。</b>实线箭头都是数据流，颜色和编号对应下面的步骤；虚线箭头只用于中断这种控制信号。所有片内数据流都经过中间的总线/互联，在总线内部改变方向。</figcaption>
+</figure>
+<ol class="steps">
+  <li><b>下载程序</b>（橙色）：主机上的测试程序（ELF 文件）经 JTAG 调试器进入芯片的 <a class="t" href="#g-dap">DAP</a>，再由 <a class="t" href="#g-memap">MEM-AP</a> 通过总线写入片上 SRAM（DDR 初始化后也可以写入 DDR）。调试器随后把 CPU 的 PC 指向程序入口并放行。</li>
+  <li><b>取指执行</b>（蓝色）：CPU 从 SRAM/DDR 取指令执行。开启 <a class="t" href="#g-cache">Cache</a> 和 <a class="t" href="#g-mmu">MMU</a> 后，指令和数据会先进 Cache。</li>
+  <li><b>配置外设</b>（绿色）：CPU 经<a class="t" href="#g-interconnect">总线/互联</a>写外设的<a class="t" href="#g-register">寄存器</a>（时钟使能、复位释放、<a class="t" href="#g-pinmux">管脚复用</a>、工作模式），也包括给 DMA 设置源地址、目的地址、长度。</li>
+  <li><b>DMA 搬运</b>（紫色）：<a class="t" href="#g-dma">DMA</a> 控制器不经过 CPU，自己通过总线从 DDR 的源区读数据，再写到 DDR 的目的区（也可以是内存到 SRAM、内存到外设）。</li>
+  <li><b>中断通知</b>（灰色虚线）：搬运完成或外设事件发生后，DMA/外设向<a class="t" href="#g-gic">中断控制器</a>发中断，中断控制器再通知 CPU。</li>
+  <li><b>比对与上报</b>（红色）：CPU 把搬运结果与期望值逐字节比对，把 PASS/FAIL 写入 UART 数据寄存器（走第 3 步同一条路径），经 USB 转串口送到主机；另一种方式是把结果写到 SRAM 中约定的地址，由调试器经 DAP 读回（左侧细红线）。主机脚本解析结果，判定用例通过与否。</li>
+</ol>
+<div class="box warn"><b>新手最常踩的坑：</b>第 4 步 DMA 写内存时，CPU 的 Cache 里可能还存着旧数据。比对前如果不先做 Cache 失效（invalidate），CPU 会读到旧值，误以为 DMA 出了 bug。这就是 <a class="t" href="#g-coherency">Cache 一致性</a>问题。</div>
+
+<h3>4.1 启动代码</h3>
+<p>启动代码负责把芯片带到“可以跑 C 程序”的状态：异常向量表、栈、Cache/MMU 初始化、多核启动（<a class="t" href="#g-psci">PSCI</a> 或 spin-table）、异常级别切换、中断控制器初始化、时钟/PLL 配置、DDR 初始化、UART 初始化、BSS 清零。</p>
+<ul>
+  <li>分两层：<b>最小启动</b>（只用 SRAM + UART）和<b>完整启动</b>（DDR + MMU + Cache + 多核 + 中断）。</li>
+  <li>Cache 开、关两种模式都要测，很多 bug 只在其中一种模式下出现。</li>
+  <li>检查 MMU 页表属性：Device / Normal、Cacheable / Non-cacheable、Shareable。</li>
+</ul>
+
+<h3>4.2 驱动级用例</h3>
+<p>每个 IP 写一个“轻量驱动 + 用例”，典型结构：</p>
+<ol class="steps">
+  <li>初始化 IP：时钟使能、复位释放、pinmux。</li>
+  <li>寄存器默认值检查。</li>
+  <li>寄存器读写属性检查（R/W、只读、<a class="t" href="#g-register">W1C</a> 等）。</li>
+  <li>正常功能场景。</li>
+  <li>边界/异常场景：错误注入、超时、FIFO 满/空。</li>
+  <li>中断与 DMA 路径。</li>
+  <li>比对结果并清理现场。</li>
+</ol>
+<table>
+<tr><th>类别</th><th>例子</th></tr>
+<tr><td>寄存器测试</td><td>默认值、读写属性、地址别名、保留位</td></tr>
+<tr><td>数据通路</td><td>DMA 内存拷贝、UART/SPI 回环（loopback）、PCIe 内部回环</td></tr>
+<tr><td>中断</td><td>每个中断源都触发一遍、优先级、嵌套、分发到不同核</td></tr>
+<tr><td>时钟/复位</td><td>模块级<a class="t" href="#g-clockgating">时钟门控</a>、软复位后功能恢复</td></tr>
+<tr><td>低功耗</td><td>模块断电再上电后寄存器状态、<a class="t" href="#g-retention">retention</a></td></tr>
+<tr><td>错误处理</td><td>ECC 错误注入、总线错误响应、看门狗超时</td></tr>
+</table>
+
+<h3>4.3 测试框架</h3>
+<table>
+<tr><th>能力</th><th>说明</th></tr>
+<tr><td>用例注册与选择</td><td>通过 UART 命令行或编译选项选择要跑的用例</td></tr>
+<tr><td>统一结果输出</td><td>PASS / FAIL / SKIP + 错误码，格式固定便于脚本解析</td></tr>
+<tr><td>自动化执行</td><td>主机 Python 脚本控制串口、JTAG、电源，批量跑用例、自动上下电</td></tr>
+<tr><td>超时与看门狗</td><td>用例挂死时自动复位并记录，不阻塞整轮<a class="t" href="#g-regression">回归</a></td></tr>
+<tr><td>多核支持</td><td>指定用例在哪个核运行，或多核并发</td></tr>
+<tr><td>参数化</td><td>频率、电压、数据模式、迭代次数可配置</td></tr>
+<tr><td>与 pre-silicon 共享</td><td>同一套用例源码通过 <a class="t" href="#g-hal">HAL</a> 屏蔽平台差异，可在仿真/Emulator/FPGA/硅片上运行</td></tr>
+</table>
+<p>常见方案：自研 C 框架 + UART shell；基于 Zephyr/FreeRTOS 的轻量环境；ARM ACS；RISC-V 的 riscv-arch-test、riscv-tests。配合可编程电源、继电器、串口服务器、温箱接口和 <a class="t" href="#g-ci">CI</a>（Jenkins / GitLab CI）每晚自动跑回归。</p>
+
+<h3>4.4 入口 / 出口标准与典型问题</h3>
+<table>
+<tr><th style="width:80px">入口</th><td>Bringup 出口达成；启动代码与测试框架能运行；用例库就绪</td></tr>
+<tr><th>出口</th><td>P0/P1 模块裸机用例执行率 100%，通过率达标（如 ≥95%，每个失败项都有分析和 bug 单）；硬件 bug 的 workaround 已写进驱动；DDR、Cache、中断、DMA、多核等基础设施稳定，能支撑 OS 移植</td></tr>
+</table>
+<table>
+<tr><th>问题</th><th>排查手段</th></tr>
+<tr><td>访问寄存器挂死</td><td>查模块时钟/复位/电源域；JTAG 经 AXI-AP 访问；看总线超时/错误寄存器</td></tr>
+<tr><td>数据比对偶发错误</td><td>Cache 一致性（是否做了 clean/invalidate）、内存属性、DMA 与 CPU 并发；关 Cache 复测</td></tr>
+<tr><td>中断不来</td><td>中断控制器配置、电平/边沿触发类型、中断号映射与 Spec 不一致、模块中断使能位</td></tr>
+<tr><td>多核启动失败</td><td>从核复位向量地址、电源域、PSCI/启动邮箱配置</td></tr>
+<tr><td>FPGA 上过、硅上失败</td><td>频率不同导致的时序/竞争问题、模拟 IP 行为差异、初始化等待时间不够</td></tr>
+</table>
+
+<!-- ============ 5 ============ -->
+<h2 id="s5">5. 阶段四：OS 阶段</h2>
+<p>目标：在真实软件栈下验证功能完整性和系统级交互；为性能、功耗、稳定性测试提供平台；支撑客户和下游软件团队开发。</p>
+
+<figure>
+<svg viewBox="0 0 960 556" role="img" aria-label="OS 阶段软件栈分层">
+  <defs><marker id="k1" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker></defs>
+  <text x="660" y="14" font-size="12.5" font-weight="700" fill="#334155">这一层主要做什么测试</text>
+  <rect x="30" y="22" width="600" height="56" rx="8" fill="#fce7f3" stroke="#db2777"/>
+  <text x="48" y="45" font-size="14" font-weight="700" fill="#1f2937">应用层</text>
+  <text x="48" y="65" font-size="12" fill="#1f2937">Benchmark、视频播放器、浏览器、相机、AI 推理 Demo、测试 APP</text>
+  <rect x="655" y="22" width="295" height="56" rx="6" fill="#fff" stroke="#db2777"/>
+  <text x="667" y="45" font-size="11.5">Geekbench / AnTuTu / GFXBench / MLPerf</text>
+  <text x="667" y="63" font-size="11.5">Monkey 随机测试、场景功耗</text>
+  <path d="M630 50.0 H653" stroke="#cbd5e1" stroke-dasharray="3 3"/>
+  <path d="M120 80 V108" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#k1)" marker-end="url(#k1)"/>
+  <text x="136" y="98.0" font-size="11.5" fill="#475569">Framework API / 库调用</text>
+  <rect x="30" y="110" width="600" height="56" rx="8" fill="#ffedd5" stroke="#ea580c"/>
+  <text x="48" y="133" font-size="14" font-weight="700" fill="#1f2937">框架 / 系统服务</text>
+  <text x="48" y="153" font-size="12" fill="#1f2937">Android Framework、systemd、电源管理与温控服务、媒体框架（GStreamer）</text>
+  <rect x="655" y="110" width="295" height="56" rx="6" fill="#fff" stroke="#ea580c"/>
+  <text x="667" y="133" font-size="11.5">Android CTS / GTS、休眠唤醒、温控策略</text>
+  <text x="667" y="151" font-size="11.5">启动时间、OTA</text>
+  <path d="M630 138.0 H653" stroke="#cbd5e1" stroke-dasharray="3 3"/>
+  <path d="M120 168 V196" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#k1)" marker-end="url(#k1)"/>
+  <text x="136" y="186.0" font-size="11.5" fill="#475569">HAL 接口（HIDL / AIDL）</text>
+  <rect x="30" y="198" width="600" height="56" rx="8" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="48" y="221" font-size="14" font-weight="700" fill="#1f2937">HAL 硬件抽象层</text>
+  <text x="48" y="241" font-size="12" fill="#1f2937">Android HAL（Camera / Audio / Graphics）、用户态库（libdrm、Mesa、厂商 SDK）</text>
+  <rect x="655" y="198" width="295" height="56" rx="6" fill="#fff" stroke="#16a34a"/>
+  <text x="667" y="221" font-size="11.5">Android VTS、Vulkan / OpenGL ES CTS</text>
+  <text x="667" y="239" font-size="11.5">编解码一致性码流</text>
+  <path d="M630 226.0 H653" stroke="#cbd5e1" stroke-dasharray="3 3"/>
+  <path d="M120 256 V284" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#k1)" marker-end="url(#k1)"/>
+  <text x="136" y="274.0" font-size="11.5" fill="#475569">系统调用 / ioctl / sysfs / 设备节点</text>
+  <rect x="30" y="286" width="600" height="70" rx="8" fill="#fef9c3" stroke="#ca8a04"/>
+  <text x="48" y="309" font-size="14" font-weight="700" fill="#1f2937">OS 内核 + 驱动</text>
+  <text x="48" y="329" font-size="12" fill="#1f2937">Linux / RTOS 内核：调度、内存管理、文件系统、网络栈、cpufreq / cpuidle / thermal</text>
+  <text x="48" y="347" font-size="12" fill="#1f2937">驱动：clock / reset / pinctrl / 电源域框架；UART、SPI、USB、PCIe、GPU、VPU 等外设驱动</text>
+  <rect x="655" y="286" width="295" height="70" rx="6" fill="#fff" stroke="#ca8a04"/>
+  <text x="667" y="307" font-size="11.5">LTP、kselftest、stress-ng、fio、iperf3</text>
+  <text x="667" y="325" font-size="11.5">驱动 probe、suspend/resume、DVFS</text>
+  <text x="667" y="343" font-size="11.5">cyclictest（实时性）</text>
+  <path d="M630 321.0 H653" stroke="#cbd5e1" stroke-dasharray="3 3"/>
+  <path d="M120 358 V386" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#k1)" marker-end="url(#k1)"/>
+  <text x="136" y="376.0" font-size="11.5" fill="#475569">SMC 调用（PSCI 电源管理、安全服务）；启动时固件引导内核</text>
+  <rect x="30" y="388" width="600" height="70" rx="8" fill="#dbeafe" stroke="#2563eb"/>
+  <text x="48" y="411" font-size="14" font-weight="700" fill="#1f2937">固件 Firmware</text>
+  <text x="48" y="431" font-size="12" fill="#1f2937">BootROM → SPL/BL2（DDR 初始化）→ ATF/BL31（PSCI、安全监控）→ OP-TEE → U-Boot</text>
+  <text x="48" y="449" font-size="12" fill="#1f2937">协处理器固件：PMU / 安全核 / DSP / RTOS</text>
+  <rect x="655" y="388" width="295" height="70" rx="6" fill="#fff" stroke="#2563eb"/>
+  <text x="667" y="409" font-size="11.5">各 Boot 模式、Secure Boot</text>
+  <text x="667" y="427" font-size="11.5">CPU 热插拔（PSCI）、OP-TEE xtest</text>
+  <text x="667" y="445" font-size="11.5">ARM SystemReady ACS</text>
+  <path d="M630 423.0 H653" stroke="#cbd5e1" stroke-dasharray="3 3"/>
+  <path d="M120 460 V488" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#k1)" marker-end="url(#k1)"/>
+  <text x="136" y="478.0" font-size="11.5" fill="#475569">寄存器读写 / 中断 / DMA</text>
+  <rect x="30" y="490" width="600" height="56" rx="8" fill="#1e293b" stroke="#1e293b"/>
+  <text x="48" y="513" font-size="14" font-weight="700" fill="#fff">硬件 SoC</text>
+  <text x="48" y="533" font-size="12" fill="#e2e8f0">CPU 集群 · DDR · 总线互联 · 外设 · GPU/VPU/ISP/NPU · 安全引擎 · PMU / 时钟 / 电源域</text>
+  <rect x="655" y="490" width="295" height="56" rx="6" fill="#fff" stroke="#1e293b"/>
+  <text x="667" y="522" font-size="11.5">裸机用例、shmoo、功耗测量（第 4、9、10 章）</text>
+  <path d="M630 518.0 H653" stroke="#cbd5e1" stroke-dasharray="3 3"/>
+</svg>
+<figcaption><b>图 4：OS 阶段软件栈分层。</b>从下往上：硬件 → <a class="t" href="#g-firmware">固件</a>（<a class="t" href="#g-bootrom">BootROM</a>、<a class="t" href="#g-spl">SPL</a>、<a class="t" href="#g-atf">ATF</a>、<a class="t" href="#g-tee">OP-TEE</a>、<a class="t" href="#g-uboot">U-Boot</a>）→ OS 内核和驱动 → <a class="t" href="#g-hal">HAL</a>（用户态）→ 框架服务 → 应用。每两层之间的双向箭头标出了它们的交互方式：上层调用下层接口，下层返回结果或上报事件；固件除了在启动时引导内核，运行时还通过 SMC 调用为内核提供电源管理和安全服务。右侧列出每层的代表性测试。上层出现问题时，要逐层往下排查：先确认驱动是否正确配置了硬件，再看硬件本身。</figcaption>
+</figure>
+
+<h3>5.1 各 OS 组件移植要点</h3>
+<table>
+<tr><th>组件</th><th>移植要点</th><th>验证要点</th></tr>
+<tr><td>SPL / BL2</td><td>DDR 初始化、时钟、加载下一级</td><td>各种启动介质加载、Secure Boot</td></tr>
+<tr><td><a class="t" href="#g-atf">ATF（TF-A）</a></td><td><a class="t" href="#g-psci">PSCI</a>（CPU 开/关/休眠）、中断控制器、<a class="t" href="#g-tzc">TZC</a> 安全配置</td><td>CPU 热插拔、系统休眠/唤醒</td></tr>
+<tr><td>U-Boot</td><td><a class="t" href="#g-dts">设备树</a>、存储/网络/USB 驱动</td><td>mmc、usb、net、sf 等命令；启动内核</td></tr>
+<tr><td>Linux 内核</td><td>设备树；clock/reset/pinctrl/电源域框架驱动；各 IP 驱动；cpufreq/cpuidle/devfreq/thermal</td><td><code>dmesg</code> 无异常、驱动 probe 成功、<a class="t" href="#g-cts">kselftest / LTP</a></td></tr>
+<tr><td>Android</td><td>AOSP 适配、HAL、Vendor 分区</td><td><a class="t" href="#g-cts">CTS / VTS</a> 子集、性能与功耗场景</td></tr>
+<tr><td>RTOS</td><td><a class="t" href="#g-bsp">BSP</a>、中断、系统节拍、低功耗管理、与主核通信（mailbox / RPMsg）</td><td>中断延迟、调度抖动、核间通信</td></tr>
+</table>
+
+<h3>5.2 驱动与应用级测试</h3>
+<table>
+<tr><th>层次</th><th>测试例子</th><th>工具</th></tr>
+<tr><td>驱动</td><td>外设读写、DMA、中断、热插拔、suspend/resume</td><td><code>i2c-tools</code>、<code>spidev_test</code>、<code>ethtool</code>、<code>v4l2-ctl</code>、<code>alsa-utils</code></td></tr>
+<tr><td>内核子系统</td><td>调度、内存管理、文件系统、网络栈</td><td>LTP、kselftest、<code>stress-ng</code>、<code>fio</code>、<code>iperf3</code></td></tr>
+<tr><td>系统服务</td><td>电源管理、温控、OTA</td><td><code>powertop</code>、thermal sysfs、Android <code>dumpsys</code></td></tr>
+<tr><td>应用</td><td>浏览器、视频、游戏、相机、AI 推理</td><td>各类 <a class="t" href="#g-benchmark">benchmark</a>、Monkey</td></tr>
+<tr><td>合规</td><td>平台标准一致性</td><td>Android CTS/VTS、ARM SystemReady ACS、LTP</td></tr>
+</table>
+
+<h3>5.3 入口 / 出口标准与典型问题</h3>
+<table>
+<tr><th style="width:80px">入口</th><td>裸机阶段出口达成；启动链各级镜像可用；关键驱动在 FPGA/Emulator 预验证过</td></tr>
+<tr><th>出口</th><td>目标 OS 稳定启动（如连续 1000 次冷启动/重启无失败）；P0/P1 驱动功能正常；suspend/resume、<a class="t" href="#g-dvfs">DVFS</a>、温控正常；合规测试通过率达标；已知硬件问题都有 workaround 或 ECO 方案，并写入 <a class="t" href="#g-errata">Errata</a></td></tr>
+</table>
+<table>
+<tr><th>问题</th><th>排查手段</th></tr>
+<tr><td>内核早期挂死、没有打印</td><td>打开 <a class="t" href="#g-earlycon">earlycon</a>；JTAG halt 看 PC；从内存 dump 内核日志缓冲区</td></tr>
+<tr><td>随机 Oops / Panic</td><td>区分软硬件：换片、降频、提压、关 Cache/预取复测；kdump、ftrace</td></tr>
+<tr><td>休眠唤醒失败</td><td>逐个关驱动定位；检查 retention 寄存器恢复；PMU 状态机；<code>pm_test</code> 分级测试</td></tr>
+<tr><td>驱动 probe 失败</td><td>设备树配置、时钟/复位/电源域依赖、deferred probe</td></tr>
+<tr><td>性能远低于预期</td><td>频率没生效、Cache 没开、DDR 配置、中断风暴、驱动轮询</td></tr>
+<tr><td>只在 OS 下复现</td><td>多核 + DMA + 中断并发、长时间累积、特定内存访问模式</td></tr>
+</table>
+
+<!-- ============ 6 ============ -->
+<h2 id="s6">6. 软硬件联调</h2>
+
+<h3 id="s6-1">6.1 调试工具</h3>
+<table>
+<tr><th>工具</th><th>用途</th><th>典型产品</th><th>使用要点</th></tr>
+<tr><td><a class="t" href="#g-jtag">JTAG</a>/<a class="t" href="#g-swd">SWD</a> 调试器</td><td>暂停/单步/断点、读写寄存器和内存、下载代码</td><td>Lauterbach TRACE32、ARM DSTREAM、J-Link、OpenOCD</td><td>提前准备芯片专用脚本；多核同步调试用 <a class="t" href="#g-cti">CTI</a></td></tr>
+<tr><td><a class="t" href="#g-trace">Trace</a></td><td>记录指令流/数据流，回溯挂死前的执行路径，性能分析</td><td>ARM ETM + ETB/ETR/TPIU、RISC-V Trace</td><td>片上 buffer 适合挂死后回溯；外部 trace 口适合长时间采集</td></tr>
+<tr><td><a class="t" href="#g-logic">逻辑分析仪</a></td><td>多路数字信号时序、协议解码</td><td>Saleae、Keysight、Tektronix</td><td>采样率至少为信号频率的 4–10 倍</td></tr>
+<tr><td><a class="t" href="#g-scope">示波器</a></td><td>电源纹波、时钟抖动、上电时序、高速信号眼图</td><td>Keysight、Tektronix、R&amp;S、LeCroy</td><td>带宽至少为信号最高频率的 3–5 倍；地线尽量短</td></tr>
+<tr><td><a class="t" href="#g-poweranalyzer">电源分析仪 / SMU</a></td><td>精确电流和功耗测量、动态功耗曲线</td><td>Keysight N6705C、Keithley SMU、Monsoon</td><td>注意量程切换、采样率</td></tr>
+<tr><td><a class="t" href="#g-protocol">协议分析仪</a></td><td>PCIe、USB、以太网、MIPI 协议级抓包</td><td>Teledyne LeCroy、Keysight</td><td>接口兼容性和链路训练问题</td></tr>
+<tr><td>热像仪 / 热电偶</td><td>发热分布、热点定位</td><td>FLIR</td><td>配合功耗测试和短路定位</td></tr>
+<tr><td><a class="t" href="#g-thermostream">温箱 / Thermostream</a></td><td>高低温测试</td><td>ThermoStream、温箱</td><td>Thermostream 可以对单颗芯片快速变温</td></tr>
+<tr><td>片上调试资源</td><td>性能计数器（<a class="t" href="#g-pmu-perf">PMU</a>）、总线监控、错误日志、内部信号观测</td><td>设计时预留</td><td><b>硅后可观测性的关键，必须在设计阶段规划</b></td></tr>
+</table>
+
+<h3 id="s6-2">6.2 Pre-silicon 用例复用</h3>
+<p>复用的价值：用例已在仿真中验证过，硅上失败时可以直接回到仿真对比。</p>
+<table>
+<tr><th>方式</th><th>说明</th></tr>
+<tr><td>C 用例 + 统一 HAL</td><td>用例源码相同，<a class="t" href="#g-hal">HAL</a> 负责屏蔽平台差异（打印、时钟、延时、结果上报）</td></tr>
+<tr><td>测试镜像二进制复用</td><td>同一个 ELF 在 Emulator 和硅上运行，对比日志</td></tr>
+<tr><td>寄存器头文件统一生成</td><td>从 IP-XACT / SystemRDL 生成</td></tr>
+<tr><td>激励/期望值复用</td><td>编解码码流、图像 golden、加密标准向量</td></tr>
+<tr><td>硅上问题回灌</td><td>硅上发现的场景转成仿真用例，在 Emulator 上复现并加入回归</td></tr>
+</table>
+<div class="box warn"><b>仿真和硅片的差异：</b>仿真里时钟、DDR、模拟 IP 是理想模型；延时循环、超时值要按真实频率调整；仿真里内存初值常为 0，硅上是随机值，未初始化变量的 bug 会在硅上暴露。</div>
+
+<h3 id="s6-3">6.3 硬件 bug 还是软件 bug？</h3>
+<p>基本思路：<b>控制变量 + 缩小范围 + 回仿真复现。</b></p>
+
+<figure>
+<svg viewBox="0 0 960 760" role="img" aria-label="硬件与软件 bug 判别流程">
+  <defs>
+    <marker markerUnits="userSpaceOnUse" id="d1" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker>
+  </defs>
+  <g font-size="13" text-anchor="middle">
+    <rect x="250" y="12" width="200" height="40" rx="20" fill="#1e293b"/><text x="350" y="37" fill="#fff" font-weight="700">发现问题</text>
+
+    <polygon points="350,80 490,120 350,160 210,120" fill="#fef9c3" stroke="#ca8a04"/><text x="350" y="125">能稳定复现吗？</text>
+    <polygon points="350,190 490,230 350,270 210,230" fill="#fef9c3" stroke="#ca8a04"/><text x="350" y="228">换片 / 换板</text><text x="350" y="245">还能复现吗？</text>
+    <polygon points="350,300 490,340 350,380 210,340" fill="#fef9c3" stroke="#ca8a04"/><text x="350" y="338">改电压/频率/温度</text><text x="350" y="355">会影响结果吗？</text>
+    <polygon points="350,410 490,450 350,490 210,450" fill="#fef9c3" stroke="#ca8a04"/><text x="350" y="448">裸机最小用例</text><text x="350" y="465">能复现吗？</text>
+    <polygon points="350,520 490,560 350,600 210,560" fill="#fef9c3" stroke="#ca8a04"/><text x="350" y="558">软件操作符合</text><text x="350" y="575">Spec 规定吗？</text>
+    <polygon points="350,630 490,670 350,710 210,670" fill="#fef9c3" stroke="#ca8a04"/><text x="350" y="668">仿真/Emulator 用相同</text><text x="350" y="685">激励能复现吗？</text>
+  </g>
+  <g stroke="#475569" fill="none" stroke-width="1.6">
+    <path d="M350 52 V78" marker-end="url(#d1)"/>
+    <path d="M350 160 V188" marker-end="url(#d1)"/>
+    <path d="M350 270 V298" marker-end="url(#d1)"/>
+    <path d="M350 380 V408" marker-end="url(#d1)"/>
+    <path d="M350 490 V518" marker-end="url(#d1)"/>
+    <path d="M350 600 V628" marker-end="url(#d1)"/>
+    <path d="M490 120 H558" marker-end="url(#d1)"/>
+    <path d="M490 230 H558" marker-end="url(#d1)"/>
+    <path d="M490 340 H558" marker-end="url(#d1)"/>
+    <path d="M490 450 H558" marker-end="url(#d1)"/>
+    <path d="M490 560 H558" marker-end="url(#d1)"/>
+    <path d="M490 670 H558" marker-end="url(#d1)"/>
+    <path d="M210 670 H182" marker-end="url(#d1)"/>
+    <path d="M760 145 V160 H930 V20 H452" stroke-dasharray="5 4" marker-end="url(#d1)"/>
+  </g>
+  <g font-size="12" fill="#475569" font-weight="600">
+    <text x="358" y="178">是</text><text x="358" y="288">是</text><text x="358" y="398">否</text><text x="358" y="508">是</text><text x="358" y="618">是</text>
+    <text x="510" y="113">否</text><text x="510" y="223">否</text><text x="510" y="333">是</text><text x="510" y="443">否</text><text x="510" y="553">否</text><text x="510" y="663">是</text><text x="195" y="663">否</text>
+  </g>
+  <g font-size="12">
+    <rect x="560" y="95" width="370" height="50" rx="6" fill="#f1f5f9" stroke="#94a3b8"/>
+    <text x="572" y="116">加日志 / Trace、加大压力、统计复现率；</text><text x="572" y="134">记录温度、电压、片号，直到能复现（虚线回到起点）</text>
+    <rect x="560" y="205" width="370" height="50" rx="6" fill="#ffedd5" stroke="#ea580c"/>
+    <text x="572" y="226">个别片/板问题：查 ATE 数据和 corner、查板子改线</text><text x="572" y="244">→ 多为制造缺陷、工艺偏差或板级问题</text>
+    <rect x="560" y="315" width="370" height="50" rx="6" fill="#fee2e2" stroke="#dc2626"/>
+    <text x="572" y="336">时序/电气裕量问题（硬件）：提压或降频后消失</text><text x="572" y="354">→ 调整 OPP / Vmin，或 ECO 修关键路径</text>
+    <rect x="560" y="425" width="370" height="50" rx="6" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="572" y="446">先查软件：并发、Cache 维护、驱动时序；</text><text x="572" y="464">排除后再查硬件在并发场景下的问题</text>
+    <rect x="560" y="535" width="370" height="50" rx="6" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="572" y="556">软件 bug：修正配置顺序或参数</text><text x="572" y="574">（若 Spec 本身写错，记为 Spec 问题）</text>
+    <rect x="560" y="645" width="370" height="50" rx="6" fill="#fee2e2" stroke="#dc2626"/>
+    <text x="572" y="666">确认 RTL bug：看仿真波形定位根因</text><text x="572" y="684">→ 评估 Workaround / ECO，写入 Errata</text>
+    <rect x="10" y="645" width="170" height="90" rx="6" fill="#fef3c7" stroke="#d97706"/>
+    <text x="20" y="668">检查激励差异；</text><text x="20" y="688">怀疑模拟/电源/工艺；</text><text x="20" y="708">示波器、FIB 等</text><text x="20" y="726">物理手段</text>
+  </g>
+</svg>
+<figcaption><b>图 5：硬件 bug 与软件 bug 判别流程。</b>从上往下逐个排除：先确保能复现；换片能区分“个别芯片问题”和“设计问题”；改变电压、频率、温度能区分“裕量问题”和“逻辑问题”；裸机最小用例能区分“软件栈问题”和“硬件问题”；最后对照 Spec 检查软件操作，并回到仿真中复现。仿真复现就能看波形找根因（RTL bug）；仿真复现不了，往往是模拟电路、电源或工艺相关的问题，需要物理手段（如 <a class="t" href="#g-fib">FIB</a>）。</figcaption>
+</figure>
+
+<table>
+<tr><th>常用对比手段</th><th>能判断什么</th></tr>
+<tr><td>关 Cache / 关预取 / 设 <a class="t" href="#g-chickenbit">chicken bit</a></td><td>CPU / Cache 一致性相关的硬件问题</td></tr>
+<tr><td>单核 vs 多核</td><td>并发、一致性问题</td></tr>
+<tr><td>降频 / 提压 / 改温度</td><td>时序裕量问题</td></tr>
+<tr><td>换 DDR 颗粒 / 降 DDR 频率</td><td>排除内存错误导致的“随机”问题</td></tr>
+<tr><td>不同软件版本二分（bisect）</td><td>定位软件回归</td></tr>
+<tr><td>Trace 回溯</td><td>挂死前最后的执行路径和访问地址</td></tr>
+<tr><td>总线错误日志 / 性能计数器</td><td>总线超时、死锁、非法访问</td></tr>
+<tr><td>读内部状态寄存器 / debug bus</td><td>状态机卡在哪个状态</td></tr>
+</table>
+
+<h3 id="s6-4">6.4 ECO / Workaround 流程</h3>
+<ol class="steps">
+  <li><b>发现并提交 bug</b>，分析定位到硬件 / 软件 / Spec。</li>
+  <li><b>评估影响</b>：功能、性能、功耗、安全、客户可见性、触发概率。</li>
+  <li><b>找 <a class="t" href="#g-workaround">Workaround</a></b>：软件规避、设 <a class="t" href="#g-chickenbit">chicken bit</a>、降频、禁用某特性、固件补丁。</li>
+  <li><b>评估 <a class="t" href="#g-eco">ECO</a></b>：<a class="t" href="#g-metaleco">Metal ECO</a>（只改金属层，成本和周期较低）、全层改版（成本高、周期长）、或不修（写入 Errata + 软件 workaround）。</li>
+  <li><b>评审决策</b>：设计、软件、产品、PM 共同决定。</li>
+  <li><b>实施</b>：修改 RTL/网表 → 仿真和形式等价验证 → 加入回归。</li>
+  <li><b>记录</b>：写入 <a class="t" href="#g-errata">Errata</a>；workaround 写进驱动/BSP，并按<a class="t" href="#g-revid">芯片版本号</a>条件启用。</li>
+</ol>
+<div class="box tip"><b>Workaround 要求：</b>用芯片版本号（Revision ID）做条件判断，下一版芯片修好后可自动关闭；量化对性能/功耗的影响；写进 Errata 和软件发布说明。<br><b>ECO 决策要考虑：</b>严重程度、有没有可接受的 workaround、ECO 窗口（能否和其他 ECO 合并）、修改引入新 bug 的风险、量产时间。</div>
+
+<h3 id="s6-5">6.5 团队协作与问题跟踪</h3>
+<div class="grid2">
+<div>
+<h4>Bug 提交必填项</h4>
+<table>
+<tr><th>字段</th><th>说明</th></tr>
+<tr><td>标题</td><td>模块 + 现象</td></tr>
+<tr><td>芯片信息</td><td>芯片版本、样片编号、corner/bin、ATE 结果</td></tr>
+<tr><td>板卡信息</td><td>板号、版本、改线情况</td></tr>
+<tr><td>环境</td><td>电压、频率、温度、DDR 配置</td></tr>
+<tr><td>软件版本</td><td>镜像版本、用例名</td></tr>
+<tr><td>复现步骤与复现率</td><td>x/y 次；换片/换板是否复现</td></tr>
+<tr><td>期望 vs 实际</td><td>引用 Spec 章节</td></tr>
+<tr><td>附件</td><td>日志、波形、截图</td></tr>
+<tr><td>级别与分类</td><td>Blocker/Critical/Major/Minor；HW-RTL / HW-模拟 / HW-板级 / SW / Spec / 待定</td></tr>
+</table>
+</div>
+<div>
+<h4>协作机制</h4>
+<table>
+<tr><th>机制</th><th>内容</th></tr>
+<tr><td>每日站会（Bringup 期）</td><td>进展、阻塞、样片/板卡分配</td></tr>
+<tr><td><a class="t" href="#g-triage">Bug Triage</a></td><td>每周 2–3 次，定级、分配负责人</td></tr>
+<tr><td>ECO 评审会</td><td>汇总硬件 bug，决定 ECO 范围</td></tr>
+<tr><td>知识库</td><td>Bringup 手册、已知问题、workaround、测量数据</td></tr>
+<tr><td>资产管理</td><td>每颗芯片、每块板的状态、使用人、改动记录</td></tr>
+<tr><td>测试看板</td><td>执行率/通过率、bug 发现与关闭曲线</td></tr>
+<tr><td>工具</td><td>Jira / 禅道、Confluence / Wiki、Jenkins、结果数据库</td></tr>
+</table>
+</div>
+</div>
+
+<!-- ============ 7 ============ -->
+<h2 id="s7">7. 测试类别一：子系统基础功能验证</h2>
+<p>目标：逐个验证每个子系统的功能符合 Spec，覆盖正常路径、边界条件、错误处理和低功耗状态切换。</p>
+
+<h3>7.1 CPU 子系统</h3>
+<table>
+<tr><th>测试项</th><th>内容</th><th>工具/用例</th></tr>
+<tr><td>指令集一致性</td><td>所有指令、异常级别、特权模式、扩展指令（NEON/SVE/RVV/浮点）</td><td>ARM ACS/AVS、riscv-arch-test、riscv-tests</td></tr>
+<tr><td>异常与中断</td><td>同步异常、中断、嵌套、中断延迟</td><td>自研用例</td></tr>
+<tr><td><a class="t" href="#g-mmu">MMU</a> / <a class="t" href="#g-tlb">TLB</a></td><td>页表遍历、各种页大小、TLB 维护指令</td><td>自研用例、Linux 内存压力</td></tr>
+<tr><td><a class="t" href="#g-cache">Cache</a></td><td>各级 Cache 功能、维护操作、ECC/奇偶校验错误注入</td><td>自研、lmbench</td></tr>
+<tr><td>多核<a class="t" href="#g-coherency">一致性</a></td><td>缓存一致性、原子操作、内存屏障、独占访问</td><td>litmus 测试、自研一致性压力</td></tr>
+<tr><td>多核启动/热插拔</td><td>CPU 开/关、cluster 上下电</td><td>PSCI 测试、Linux CPU hotplug</td></tr>
+<tr><td>虚拟化</td><td>Hypervisor 模式、二阶段地址转换、虚拟中断</td><td>KVM、Xen</td></tr>
+<tr><td>调试与 Trace</td><td>断点、观察点、ETM、PMU 计数器准确性</td><td>TRACE32、perf</td></tr>
+<tr><td>随机指令测试</td><td>随机生成指令流并与参考模型比对</td><td>RISCV-DV、Force-RISCV</td></tr>
+</table>
+
+<h3>7.2 内存子系统</h3>
+<table>
+<tr><th>测试项</th><th>内容</th><th>工具/用例</th></tr>
+<tr><td>DDR 功能</td><td>各频率档、全地址空间、各 rank/通道、交织模式</td><td>March C-、memtester、stressapptest</td></tr>
+<tr><td>DDR 低功耗</td><td>自刷新（Self-refresh）、Power-down、频率切换</td><td>自研用例 + 功耗测量</td></tr>
+<tr><td><a class="t" href="#g-ecc">ECC</a></td><td>单 bit 纠错、双 bit 检错、错误注入与上报</td><td>控制器错误注入寄存器、Linux EDAC</td></tr>
+<tr><td>片上 SRAM</td><td>全地址测试、ECC、retention</td><td>MBIST + 软件 March 测试</td></tr>
+<tr><td>内存保护</td><td><a class="t" href="#g-tzc">TZC</a>、MPU、防火墙</td><td>非法访问是否触发异常</td></tr>
+<tr><td>颗粒兼容性</td><td>不同厂商/容量的 DDR</td><td>兼容性矩阵测试</td></tr>
+</table>
+
+<h3>7.3 总线 / 互联</h3>
+<table>
+<tr><th>测试项</th><th>内容</th></tr>
+<tr><td>地址映射</td><td>每个 master 访问每个 slave 的通路矩阵；非法地址返回 decode error</td></tr>
+<tr><td>一致性互联</td><td>snoop、IO 一致性（DMA 一致性访问）</td></tr>
+<tr><td><a class="t" href="#g-qos">QoS</a></td><td>优先级、带宽分配；显示等实时 master 不能出现 underflow（画面撕裂）</td></tr>
+<tr><td>超时/错误处理</td><td>总线超时检测、错误响应、错误日志</td></tr>
+<tr><td>死锁/活锁</td><td>多 master 并发压力下不死锁</td></tr>
+<tr><td>安全属性</td><td>安全/非安全访问控制</td></tr>
+</table>
+
+<h3>7.4 外设</h3>
+<table>
+<tr><th>外设</th><th>测试要点</th><th>工具/方法</th></tr>
+<tr><td>UART</td><td>波特率、流控、FIFO、DMA</td><td>回环、PC 串口</td></tr>
+<tr><td><a class="t" href="#g-i2c">I2C</a> / I3C</td><td>各速率模式、多主、时钟延展、错误恢复</td><td>逻辑分析仪、i2c-tools</td></tr>
+<tr><td><a class="t" href="#g-spi">SPI</a> / QSPI</td><td>模式 0–3、各频率、DMA、XIP</td><td>spidev_test、Flash 读写</td></tr>
+<tr><td>GPIO</td><td>输入输出、边沿/电平中断、唤醒源</td><td>回环接线</td></tr>
+<tr><td>定时器 / PWM / 看门狗</td><td>精度、中断、看门狗复位</td><td>示波器测 PWM</td></tr>
+<tr><td>SD / eMMC / UFS</td><td>各速度模式、tuning</td><td>fio、mmc-utils</td></tr>
+<tr><td>USB</td><td>Host/Device/OTG、各速度、类驱动</td><td>USB 协议分析仪</td></tr>
+<tr><td><a class="t" href="#g-pcie">PCIe</a></td><td>链路训练（Gen1–Gen5）、lane 宽度、ASPM 低功耗、MSI/MSI-X</td><td>lspci、协议分析仪、合规测试</td></tr>
+<tr><td>以太网</td><td>各速率、TSN、校验和卸载</td><td>iperf3、ethtool</td></tr>
+<tr><td>CAN / CAN-FD</td><td>波特率、错误帧、总线负载</td><td>CAN 分析仪</td></tr>
+<tr><td>ADC / DAC</td><td>精度、INL/DNL、SNR</td><td>信号源 + 采样分析</td></tr>
+<tr><td>温度传感器</td><td>精度标定</td><td>温箱 + 热电偶对比</td></tr>
+</table>
+
+<h3>7.5 多媒体</h3>
+<table>
+<tr><th>子系统</th><th>测试要点</th><th>工具/用例</th></tr>
+<tr><td><a class="t" href="#g-gpu">GPU</a></td><td>图形 API 一致性、通用计算、各频率</td><td>Vulkan CTS、OpenGL ES CTS、OpenCL CTS、GFXBench</td></tr>
+<tr><td><a class="t" href="#g-vpu">VPU</a>（视频编解码）</td><td>H.264/H.265/VP9/AV1，各 Profile/Level、分辨率、多路并发</td><td>标准一致性码流、ffmpeg、GStreamer</td></tr>
+<tr><td><a class="t" href="#g-isp">ISP</a> / Camera</td><td><a class="t" href="#g-mipi">MIPI</a> CSI-2 接收、各处理模块、3A</td><td>传感器 + 测试图卡、v4l2-ctl</td></tr>
+<tr><td>Display</td><td>MIPI DSI、HDMI/DP、多图层合成、分辨率/刷新率</td><td>显示器/分析仪、modetest</td></tr>
+<tr><td>Audio</td><td>I2S/TDM/PDM、采样率、DSP</td><td>alsa-utils、音频分析仪</td></tr>
+<tr><td><a class="t" href="#g-npu">NPU</a></td><td>算子正确性、模型精度、并发</td><td>厂商 SDK、MLPerf 模型，与 CPU/GPU 结果比对</td></tr>
+</table>
+
+<h3>7.6 安全</h3>
+<table>
+<tr><th>测试项</th><th>内容</th></tr>
+<tr><td><a class="t" href="#g-secureboot">Secure Boot</a></td><td>签名校验、证书链、防回滚、镜像加密</td></tr>
+<tr><td><a class="t" href="#g-trustzone">TrustZone</a> / <a class="t" href="#g-tee">TEE</a></td><td>安全世界隔离、安全外设访问控制、OP-TEE xtest</td></tr>
+<tr><td>加密引擎</td><td>AES/SHA/RSA/ECC/SM2/SM3/SM4 用标准向量验证正确性和性能</td></tr>
+<tr><td><a class="t" href="#g-trng">TRNG</a></td><td>随机数质量（NIST SP800-22、SP800-90B）</td></tr>
+<tr><td><a class="t" href="#g-efuse">eFuse / OTP</a></td><td>烧写、读取、锁定（<b>用专门样片，烧写不可逆</b>）</td></tr>
+<tr><td>调试安全</td><td>JTAG 锁定 / 认证解锁</td></tr>
+<tr><td>防攻击</td><td>侧信道（功耗/电磁分析）、故障注入（电压/时钟毛刺、激光）基础评估</td></tr>
+</table>
+
+<h3>7.7 电源与时钟管理</h3>
+<ul>
+  <li>所有 PLL 的频率范围、锁定时间、<a class="t" href="#g-ssc">展频</a>。</li>
+  <li>所有<a class="t" href="#g-powerdomain">电源域</a>上下电、<a class="t" href="#g-isolation">隔离</a>、<a class="t" href="#g-retention">retention</a>。</li>
+  <li>唤醒源（GPIO、RTC、USB、网络唤醒）。</li>
+  <li>各类复位（冷复位、热复位、看门狗复位、软件复位）及复位后的状态。</li>
+</ul>
+
+<!-- ============ 8 ============ -->
+<h2 id="s8">8. 测试类别二：性能验证</h2>
+<p>目标：验证芯片在真实场景下达到产品性能指标，并与 pre-silicon 性能模型对比，找出性能 bug。</p>
+
+<h3>8.1 测试项与指标</h3>
+<table>
+<tr><th>类别</th><th>指标</th><th>说明</th></tr>
+<tr><td>CPU 算力</td><td>整数/浮点性能、<a class="t" href="#g-ipc">IPC</a>、多核扩展性</td><td>与性能模型对比，找微架构性能 bug</td></tr>
+<tr><td>内存<a class="t" href="#g-bandwidth">带宽</a></td><td>读/写/拷贝带宽（单核、多核、多 master）</td><td>理论带宽利用率，通常目标 70%–90%</td></tr>
+<tr><td>内存<a class="t" href="#g-bandwidth">延迟</a></td><td>L1/L2/L3/DDR 访问延迟</td><td>指针追逐（pointer chasing）测试</td></tr>
+<tr><td>互联性能</td><td>跨集群延迟、多 master 并发带宽、QoS 效果</td><td>多 master 并发测试</td></tr>
+<tr><td>IO 性能</td><td>存储吞吐/IOPS、网络吞吐/延迟、PCIe 吞吐</td><td>fio、iperf3、DMA 测试</td></tr>
+<tr><td>多媒体</td><td>编解码帧率（如 4K60）、GPU 帧率、ISP 吞吐</td><td>码流测试、GFXBench</td></tr>
+<tr><td>AI</td><td>TOPS 利用率、推理延迟/吞吐</td><td>MLPerf Inference</td></tr>
+<tr><td>系统</td><td>启动时间、应用启动时间、UI 流畅度</td><td>bootchart、Android 自动化测试</td></tr>
+<tr><td>实时性</td><td>中断延迟、调度抖动</td><td>cyclictest</td></tr>
+</table>
+
+<h3>8.2 常用 Benchmark 与工具</h3>
+<table>
+<tr><th>工具</th><th>用途</th></tr>
+<tr><td>SPEC CPU 2017</td><td>业界标准 CPU 性能</td></tr>
+<tr><td>CoreMark / CoreMark-PRO</td><td>嵌入式 CPU 性能，裸机即可运行</td></tr>
+<tr><td>Dhrystone</td><td>传统整数性能（DMIPS/MHz），参考意义有限</td></tr>
+<tr><td>Geekbench / AnTuTu / PCMark</td><td>消费级综合跑分</td></tr>
+<tr><td>STREAM</td><td>内存持续带宽（Copy / Scale / Add / Triad）</td></tr>
+<tr><td>lmbench / tinymembench</td><td>内存延迟、带宽、系统调用开销</td></tr>
+<tr><td>fio / iperf3 / netperf</td><td>存储与网络性能</td></tr>
+<tr><td>GFXBench / 3DMark</td><td>GPU 性能</td></tr>
+<tr><td>MLPerf</td><td>AI 推理</td></tr>
+<tr><td>perf / simpleperf / ARM Streamline</td><td>性能分析，采集 <a class="t" href="#g-pmu-perf">PMU</a> 计数器</td></tr>
+<tr><td>片上总线监控器</td><td>统计各 master 的带宽和延迟</td></tr>
+</table>
+
+<h3>8.3 DVFS 验证</h3>
+<div class="box analogy"><b>打个比方：</b><a class="t" href="#g-dvfs">DVFS</a> 像汽车的自动变速箱：爬坡时降档加油（升压升频），平路巡航时升档省油（降频降压）。每一档就是一个 <a class="t" href="#g-opp">OPP</a>（电压-频率工作点）。</div>
+<table>
+<tr><th>测试项</th><th>内容</th></tr>
+<tr><td>OPP 表验证</td><td>每个频率点在对应电压下功能稳定（结合 shmoo 结果确定 OPP）</td></tr>
+<tr><td>频率切换</td><td>切换耗时；切换过程中无挂死、无数据错误；频繁切换压力测试</td></tr>
+<tr><td>电压切换</td><td>PMIC 调压速度、过冲/下冲；“先升压后升频、先降频后降压”的顺序</td></tr>
+<tr><td><a class="t" href="#g-governor">Governor</a> 行为</td><td>schedutil / ondemand / performance 下的响应延迟和能效</td></tr>
+<tr><td><a class="t" href="#g-avs">AVS</a></td><td>按芯片 corner 和温度调压，验证每颗芯片的电压表</td></tr>
+<tr><td><a class="t" href="#g-thermal">温控降频</a></td><td>触发 throttling 的温度阈值和恢复</td></tr>
+<tr><td>devfreq</td><td>GPU / DDR / NPU 的频率调节</td></tr>
+</table>
+
+<h3>8.4 方法与注意事项</h3>
+<ul>
+  <li><b>固定环境</b>：锁频（performance governor）、控制环境温度、固定 DDR 频率、关闭后台服务，多次测试取中位数。</li>
+  <li><b>与模型对比</b>：同一 workload 在性能模型（gem5、架构模型、Emulator）中跑，对比 IPC、Cache miss、带宽；偏差超过 10% 要分析原因。</li>
+  <li><b>性能 bug 常见来源</b>：预取器失效、Cache 替换策略、总线 outstanding 数不足、QoS 配置、DDR 调度策略、TLB miss、频率没生效、编译选项不对。</li>
+  <li><b>记录完整</b>：芯片 corner、温度、频率、电压、软件和编译器版本。</li>
+</ul>
+
+<!-- ============ 9 ============ -->
+<h2 id="s9">9. 测试类别三：功耗验证</h2>
+<p>目标：测量各场景功耗，与功耗模型和目标对比，验证低功耗机制正确有效。</p>
+
+<h3>9.1 功耗由什么组成</h3>
+<table>
+<tr><th>类型</th><th>说明</th><th>影响因素</th></tr>
+<tr><td><a class="t" href="#g-leakage">静态功耗（漏电）</a></td><td>晶体管“关着”也会漏的电</td><td>工艺 corner（FF 漏电大）、温度（随温度指数增长）、电压</td></tr>
+<tr><td><a class="t" href="#g-dynpower">动态功耗</a></td><td>P = α·C·V²·f，电路翻转消耗的电</td><td>翻转率、电容、电压（平方关系）、频率</td></tr>
+<tr><td>短路功耗</td><td>翻转瞬间的直通电流</td><td>输入信号斜率</td></tr>
+<tr><td>IO 功耗</td><td>IO 驱动、端接</td><td>接口速率、驱动强度、ODT</td></tr>
+<tr><td>模拟/PHY 功耗</td><td>PLL、DDR PHY、SerDes</td><td>工作模式</td></tr>
+</table>
+
+<h3>9.2 测试项</h3>
+<table>
+<tr><th>测试项</th><th>内容</th></tr>
+<tr><td>静态功耗</td><td>复位态/时钟全关时各电源域电流；多温度（25/85/105°C）、多 corner</td></tr>
+<tr><td>动态功耗</td><td>各 IP 满负载、典型负载；各 OPP 点功耗曲线</td></tr>
+<tr><td>场景功耗</td><td>待机、视频播放、游戏、浏览、录像、AI 推理</td></tr>
+<tr><td>低功耗模式</td><td><a class="t" href="#g-wfi">WFI</a>、CPU idle、cluster 关闭、<a class="t" href="#g-str">Suspend-to-RAM</a>、深度睡眠</td></tr>
+<tr><td>模式切换</td><td>进出耗时、唤醒源、切换时的电流尖峰</td></tr>
+<tr><td>电源域</td><td>每个<a class="t" href="#g-powerdomain">电源域</a>独立上下电，<a class="t" href="#g-isolation">隔离</a>和 retention 正确，断电后漏电符合预期</td></tr>
+<tr><td>时钟门控</td><td>模块空闲时<a class="t" href="#g-clockgating">时钟门控</a>是否生效（对比开关门控的功耗差）</td></tr>
+<tr><td>模型校准</td><td>实测与 pre-silicon 功耗估计（PrimePower / PowerArtist / Joules）对比</td></tr>
+<tr><td>热测试</td><td>不同功耗下结温、热阻，温控策略是否有效</td></tr>
+</table>
+
+<h3>9.3 测量方法</h3>
+<table>
+<tr><th>方法</th><th>适用</th><th>注意事项</th></tr>
+<tr><td>检流电阻 + 精密 ADC 采集卡</td><td>多路同时测，长时间记录</td><td>电阻精度 0.1%；阻值在压降和分辨率之间折中；开尔文（四线）接法</td></tr>
+<tr><td>电源分析仪/SMU 直接供电</td><td>高精度单路、微安级待机电流</td><td>量程切换会造成电压跌落；用 remote sense 补偿线损</td></tr>
+<tr><td>PMIC 内置电量计</td><td>系统级快速估计</td><td>精度有限，需要校准</td></tr>
+<tr><td>示波器 + 电流探头</td><td>瞬态电流、切换尖峰</td><td>精度有限</td></tr>
+<tr><td>整机功耗计</td><td>整板功耗</td><td>包含板级损耗，需扣除</td></tr>
+</table>
+<div class="box warn"><b>测量规范：</b>区分芯片功耗和板级功耗（PMIC 效率、外围器件），报告里写明测量点；固定温度并记录芯片温度；每颗片记录 corner，至少覆盖 TT 和 FF；用 GPIO 或时间戳把测量数据和软件场景对齐；<b>测待机功耗时断开 JTAG/UART</b>（会引入漏电通路），并关掉板上 LED 等无关负载。</div>
+
+<h3>9.4 工具</h3>
+<p>Keysight N6705C + 14585A 软件、Keithley SMU、Monsoon Power Monitor、NI 采集卡、ARM Energy Probe、自研多通道功耗板；软件侧有 <code>powertop</code>、Android <code>batterystats</code>/<code>dumpsys</code>、cpuidle/cpufreq 统计（<code>/sys/devices/system/cpu/*/cpuidle/</code>）。</p>
+
+<h3>9.5 典型问题</h3>
+<table>
+<tr><th>现象</th><th>可能原因</th></tr>
+<tr><td>待机电流偏大</td><td>某电源域没关、IO 浮空或上下拉冲突、外设没进低功耗、调试器连着、时钟没门控</td></tr>
+<tr><td>进不了低功耗</td><td>有中断挂起、驱动没释放资源或持有唤醒锁、PMU 握手失败</td></tr>
+<tr><td>唤醒后挂死</td><td>retention 寄存器丢失、恢复顺序错误、PLL 没重新锁定、DDR 退出自刷新失败</td></tr>
+<tr><td>动态功耗高于模型</td><td>时钟门控失效、翻转率估计偏差、OPP 电压余量过大</td></tr>
+<tr><td>漏电远高于预期</td><td>FF 片、温度高、<a class="t" href="#g-powergating">电源门控</a>没生效、工艺异常（查 ATE IDDQ）</td></tr>
+</table>
+
+<!-- ============ 10 ============ -->
+<h2 id="s10">10. 测试类别四：稳定性与压力测试</h2>
+<p>目标：确保芯片在全工作范围（电压、频率、温度）以及长时间、高负载下稳定可靠，确定量产规格和裕量。</p>
+
+<h3>10.1 长时间运行</h3>
+<table>
+<tr><th>测试</th><th>内容</th><th>典型时长/标准</th></tr>
+<tr><td>长稳测试</td><td>OS 下持续运行综合负载</td><td>72h / 168h 无异常</td></tr>
+<tr><td>启动压力</td><td>冷启动/热重启循环</td><td>≥ 1000–10000 次无失败</td></tr>
+<tr><td>休眠唤醒循环</td><td>反复 suspend/resume</td><td>≥ 1000–5000 次</td></tr>
+<tr><td>DVFS 切换压力</td><td>随机频繁切换频率/电压</td><td>数小时到数天</td></tr>
+<tr><td>热插拔</td><td>USB/SD/CPU hotplug 循环</td><td>数千次</td></tr>
+<tr><td>应用长跑</td><td>视频、游戏等典型场景持续运行</td><td>24h 以上</td></tr>
+</table>
+
+<h3>10.2 高低温与电压拉偏（Shmoo）</h3>
+<p><a class="t" href="#g-shmoo">Shmoo 图</a>：以两个参数（如电压和频率）为坐标轴，在每个点上跑测试并标记通过/失败，直观看出芯片的工作窗口和裕量。</p>
+<figure>
+<svg id="shmoo" viewBox="0 0 640 330" style="max-width:700px;margin:0 auto" role="img" aria-label="电压频率 shmoo 图示例">
+  <text x="20" y="20" font-size="12.5" fill="#334155">电压 (V)</text>
+  <text x="520" y="318" font-size="12.5" fill="#334155">频率 (MHz)</text>
+  <g id="shmoo-cells"></g>
+  <g font-size="12">
+    <rect x="470" y="40" width="16" height="16" fill="#86efac"/><text x="492" y="53">通过 Pass</text>
+    <rect x="470" y="64" width="16" height="16" fill="#fca5a5"/><text x="492" y="77">失败 Fail</text>
+    <rect x="470" y="88" width="16" height="16" fill="#86efac" stroke="#1d4ed8" stroke-width="3"/><text x="492" y="101">选定 OPP 点</text>
+    <text x="470" y="140" fill="#475569">边界左下方的阶梯线</text><text x="470" y="158" fill="#475569">就是芯片能工作的极限；</text>
+    <text x="470" y="176" fill="#475569">OPP 要离边界留出裕量</text><text x="470" y="194" fill="#475569">（通常 5%–10% 电压）</text>
+  </g>
+</svg>
+<figcaption><b>图 6：电压-频率 Shmoo 图示例。</b>每一格表示在该电压和频率下跑压力测试的结果。固定频率往下扫电压，得到该频率的 <a class="t" href="#g-vmin">Vmin</a>；固定电压往右扫频率，得到 Fmax。蓝框是最终选定的 <a class="t" href="#g-opp">OPP</a> 点，它们与失败边界之间都留了裕量。要在多个温度、多颗芯片上重复，才能得到可靠的规格。</figcaption>
+</figure>
+<table>
+<tr><th>测试项</th><th>内容</th></tr>
+<tr><td>Vmin 测试</td><td>固定频率，逐步降压到失败，确定每个 OPP 点的最低工作电压</td></tr>
+<tr><td>Fmax 测试</td><td>固定电压，逐步提频到失败</td></tr>
+<tr><td>V-F Shmoo</td><td>电压 × 频率二维扫描，确定 OPP 表和裕量</td></tr>
+<tr><td>温度 Shmoo</td><td>在 -40 / 0 / 25 / 85 / 105 / 125°C（按产品等级）下重复，找最坏温度点。注意<a class="t" href="#g-tempinv">温度反转效应</a>：先进工艺下低温可能更慢</td></tr>
+<tr><td>多芯片统计</td><td>覆盖 SS/TT/FF 多颗芯片，得到分布，支撑 AVS 和分 bin 策略</td></tr>
+<tr><td>IO 拉偏</td><td>IO 电压、驱动强度、DDR Vref/时序裕量扫描</td></tr>
+<tr><td>电源噪声</td><td>叠加纹波和瞬态负载，验证电源完整性裕量</td></tr>
+</table>
+<p>Shmoo 要用对时序最敏感的负载：CPU <a class="t" href="#g-powervirus">功耗病毒</a>、<code>stressapptest</code>、Linpack、内存密集型和 Cache 冲突密集型测试，以及 ATE 上的 scan/MBIST pattern。</p>
+<table>
+<tr><th>产品等级</th><th>环境温度范围</th></tr>
+<tr><td>消费级</td><td>0°C ~ 70°C</td></tr>
+<tr><td>工业级</td><td>-40°C ~ 85°C</td></tr>
+<tr><td>车规级（AEC-Q100 Grade 1）</td><td>-40°C ~ 125°C</td></tr>
+</table>
+
+<h3>10.3 并发压力</h3>
+<table>
+<tr><th>场景</th><th>例子</th></tr>
+<tr><td>全核满载</td><td>所有 CPU 核跑功耗病毒 / stress-ng</td></tr>
+<tr><td>多 master 并发</td><td>CPU + GPU + VPU + NPU + DMA + 显示同时高带宽访问 DDR</td></tr>
+<tr><td>中断风暴</td><td>高频中断 + 多核负载</td></tr>
+<tr><td>IO 并发</td><td>存储 + 网络 + USB 同时满速</td></tr>
+<tr><td>跨子系统场景</td><td>4K 录像 + 编码 + 显示 + AI 推理 + 网络上传</td></tr>
+<tr><td>资源竞争</td><td>一致性冲突热点（false sharing）、锁竞争、TLB 压力</td></tr>
+<tr><td>极端组合</td><td>并发 + 高温 + 低压 + 频繁 DVFS</td></tr>
+</table>
+<p>工具：<code>stress-ng</code>、<code>stressapptest</code>、<code>memtester</code>、Linpack/HPL、<code>prime95</code>、<code>fio</code>、<code>iperf3</code>、glmark2、自研功耗病毒、Android Monkey。</p>
+
+<h3>10.4 可靠性</h3>
+<p>通常由可靠性/质量团队在 ATE 和专用设备上执行，硅后验证团队需要了解并配合。</p>
+<table>
+<tr><th>试验</th><th>目的</th><th>参考标准</th></tr>
+<tr><td><a class="t" href="#g-htol">HTOL</a></td><td>高温加速老化，评估寿命期失效率</td><td>JESD22-A108</td></tr>
+<tr><td>ELFR</td><td>早期失效率（早夭）</td><td>JESD74、AEC-Q100</td></tr>
+<tr><td>ESD（HBM/CDM）</td><td>静电放电耐受能力</td><td>JS-001、JS-002</td></tr>
+<tr><td><a class="t" href="#g-latchup">Latch-up</a></td><td>闩锁效应</td><td>JESD78</td></tr>
+<tr><td>TC / THB / HAST</td><td>温度循环、温湿度偏压等封装与环境可靠性</td><td>JESD22 系列</td></tr>
+<tr><td>SER</td><td>宇宙射线/α 粒子引起的软错误率</td><td>JESD89</td></tr>
+<tr><td>老化（Aging）</td><td>长期使用后性能退化（NBTI/HCI），老化后复测 Vmin/Fmax</td><td>—</td></tr>
+<tr><td>车规功能安全</td><td>故障注入、诊断覆盖率</td><td>ISO 26262</td></tr>
+</table>
+
+<h3>10.5 典型问题</h3>
+<table>
+<tr><th>问题</th><th>分析方向</th></tr>
+<tr><td>跑几个小时后随机挂死</td><td>Trace 回溯；看门狗 + 现场保存（<a class="t" href="#g-earlycon">pstore/ramoops</a>）；统计与温度/电压的相关性</td></tr>
+<tr><td>只在高温/低压失败</td><td>时序裕量不足 → 调整 OPP/AVS 或 ECO 修关键路径</td></tr>
+<tr><td>只在低温失败</td><td>温度反转、模拟电路（PLL/LDO）、DDR 时序</td></tr>
+<tr><td>个别芯片失败</td><td>工艺偏差，查 ATE 数据，考虑增加 ATE 筛选项</td></tr>
+<tr><td>并发场景死锁</td><td>互联/一致性协议死锁、QoS 饥饿；抓总线状态寄存器</td></tr>
+<tr><td>内存位翻转</td><td>DDR 时序裕量、Row Hammer、电源噪声；看 ECC 统计</td></tr>
+</table>
+
+<!-- ============ 11 ============ -->
+<h2 id="s11">11. Checklist</h2>
+<div class="grid2">
+<div>
+<h3>回片前</h3>
+<ul class="check">
+  <li>测试计划已评审，Feature 列表和优先级明确</li>
+  <li>每个阶段的入口/出口标准已定义</li>
+  <li>样片分配方案确定（Bringup / 功耗 / 拉偏 / FA 预留）</li>
+  <li>验证板空板上电检查通过</li>
+  <li>每路电源有测量点并能独立断开</li>
+  <li>JTAG / UART / Trace 口已用调试器验证电平</li>
+  <li>BootROM 与启动镜像在 Emulator/FPGA 跑通并归档</li>
+  <li>JTAG 调试脚本已在 Emulator 验证</li>
+  <li>DDR 初始化代码和多套降级配置就绪</li>
+  <li>测试框架和用例库能在 FPGA 上运行</li>
+  <li>自动化测试台（电源控制、日志收集、CI）就绪</li>
+  <li>Bringup 手册（步骤、预期电流、预期输出、决策树）完成</li>
+  <li>问题跟踪系统、Bug 模板、Triage 机制建立</li>
+  <li>仪器已预约/校准</li>
+  <li>ATE 程序就绪，样片档案建立</li>
+</ul>
+<h3>Bringup</h3>
+<ul class="check">
+  <li>上电前阻抗测量，与参考值一致</li>
+  <li>限流逐路上电，记录每路电流基线</li>
+  <li>上电时序符合 Spec</li>
+  <li>晶振起振、PLL 锁定</li>
+  <li>复位释放时序正确，复位原因寄存器可读</li>
+  <li>JTAG IDCODE 可读，所有核可 halt</li>
+  <li>BootROM 运行状态确认</li>
+  <li>SRAM 代码下载执行成功</li>
+  <li>PLL 提频到目标频率</li>
+  <li>DDR training 通过（记录每个 byte lane 结果），内存测试通过</li>
+  <li>各 Boot 模式验证</li>
+  <li>所有问题已录入跟踪系统</li>
+</ul>
+</div>
+<div>
+<h3>Bare Metal / OS</h3>
+<ul class="check">
+  <li>Cache/MMU 开关两种模式都测过</li>
+  <li>多核启动、中断、DMA 基础设施稳定</li>
+  <li>P0/P1 模块寄存器测试和功能用例执行完成</li>
+  <li>Workaround 按芯片版本条件加入驱动</li>
+  <li>启动链（SPL/ATF/U-Boot/内核）全部跑通</li>
+  <li>所有驱动 probe 成功，dmesg 无错误</li>
+  <li>休眠唤醒、CPU 热插拔、DVFS、温控正常</li>
+  <li>合规测试（LTP/kselftest/CTS/VTS/ACS）已执行</li>
+  <li>启动压力测试达标</li>
+</ul>
+<h3>性能 / 功耗 / 稳定性</h3>
+<ul class="check">
+  <li>性能测试环境固定并记录</li>
+  <li>关键 benchmark 与性能模型对比，偏差已分析</li>
+  <li>内存带宽/延迟曲线完成</li>
+  <li>OPP 表经 shmoo 验证，裕量足够</li>
+  <li>静态功耗覆盖多温度、多 corner</li>
+  <li>场景功耗和低功耗模式功耗测量完成</li>
+  <li>低功耗模式进出时间和唤醒源验证</li>
+  <li>测功耗时已断开调试器等干扰源</li>
+  <li>V-F-T shmoo 覆盖 SS/TT/FF 多颗芯片</li>
+  <li>72h/168h 长稳、启动/休眠循环达标</li>
+  <li>并发压力场景已覆盖</li>
+  <li>可靠性试验计划与结果有人跟踪</li>
+</ul>
+<h3>收尾</h3>
+<ul class="check">
+  <li>Errata 完成（描述、影响、workaround、修复计划）</li>
+  <li>ECO 清单评审完成</li>
+  <li>测试报告（覆盖率、通过率、遗留问题、风险）</li>
+  <li>硅上问题已回灌到 pre-silicon 回归</li>
+  <li>经验教训总结，反馈给下一代设计（可测性/可观测性）</li>
+  <li>BSP 与测试资产移交量产/客户团队</li>
+</ul>
+</div>
+</div>
+
+<!-- ============ 12 ============ -->
+<h2 id="s12">12. 常见坑</h2>
+<table>
+<tr><th>#</th><th>坑</th><th>后果</th><th>怎么避免</th></tr>
+<tr><td>1</td><td>没做 ATE 筛片就开始 debug</td><td>把制造缺陷当设计 bug，浪费大量时间</td><td>每颗样片先过 ATE、建档；遇到问题先换片验证</td></tr>
+<tr><td>2</td><td>板卡不可观测/不可调</td><td>电源、时钟没法测量或调整</td><td>预留测试点、独立电源、跳线、外部时钟注入</td></tr>
+<tr><td>3</td><td>JTAG 被 eFuse/安全配置锁死</td><td>失去调试能力</td><td>样片默认不烧安全 eFuse；烧写实验用专门样片</td></tr>
+<tr><td>4</td><td>误烧 eFuse/OTP</td><td>芯片报废或进入不可恢复状态</td><td>烧写双人确认、脚本加保护、专用样片</td></tr>
+<tr><td>5</td><td>预验证用的 RTL/软件版本与硅片不一致</td><td>FPGA 上正常、硅上异常</td><td>用最终网表对应的 RTL 做最后预验证，严格管理镜像版本</td></tr>
+<tr><td>6</td><td>忽略 Cache 一致性</td><td>偶发数据错，误判为硬件 bug</td><td>DMA 前后正确 clean/invalidate；关 Cache 对比</td></tr>
+<tr><td>7</td><td>延时/超时值照搬仿真</td><td>频率不同导致超时或等待不足</td><td>用定时器做延时；超时值参数化</td></tr>
+<tr><td>8</td><td>假设未初始化内存是 0</td><td>仿真通过、硅上随机失败</td><td>显式初始化；测试覆盖随机初值</td></tr>
+<tr><td>9</td><td>DDR 一上来就跑最高频</td><td>training 失败无从下手</td><td>先低频、单通道、单 rank，逐步加码</td></tr>
+<tr><td>10</td><td>调试器/串口影响功耗测量</td><td>待机功耗虚高</td><td>测量前断开调试连接</td></tr>
+<tr><td>11</td><td>只测一颗芯片 / 一个 corner</td><td>量产后出现 Vmin/漏电问题</td><td>覆盖 SS/TT/FF 和多颗芯片统计</td></tr>
+<tr><td>12</td><td>忽略温度反转效应</td><td>低温失败没被发现</td><td>Shmoo 覆盖低温点</td></tr>
+<tr><td>13</td><td>板子被飞线改过但没记录</td><td>别人用改过的板子得出错误结论</td><td>板卡资产管理，记录每块板的改动</td></tr>
+<tr><td>14</td><td>Bug 报告信息不全</td><td>无法复现，反复沟通</td><td>强制使用 Bug 模板</td></tr>
+<tr><td>15</td><td>Workaround 不区分芯片版本</td><td>下一版芯片仍背着不必要的性能损失</td><td>按 Revision ID 条件启用，写入 Errata</td></tr>
+<tr><td>16</td><td>性能测试环境不固定</td><td>结果波动大，无法对比</td><td>锁频、控温、固定版本、多次取中位数</td></tr>
+<tr><td>17</td><td>设计阶段没预留可观测性</td><td>硅上挂死无法定位</td><td>规划 debug bus、总线错误日志、Trace、PMU、MEM-AP</td></tr>
+<tr><td>18</td><td>只做裸机测试，忽视并发</td><td>OS 下多 master 并发时死锁或数据错</td><td>尽早做系统级并发压力测试</td></tr>
+<tr><td>19</td><td>上电不限流</td><td>短路时烧毁芯片或板卡</td><td>首次上电一律用可调电源并限流</td></tr>
+<tr><td>20</td><td>硅上问题没回灌仿真</td><td>下一版芯片重复出现同类 bug</td><td>每个硬件 bug 都在仿真中复现并加入回归</td></tr>
+<tr><td>21</td><td>样片被各团队抢用</td><td>进度阻塞、互相干扰</td><td>样片/板卡排班与资产管理</td></tr>
+<tr><td>22</td><td>把“降频/提压能过”当成解决方案</td><td>掩盖真实时序问题，量产良率下降</td><td>找到根因路径，评估 ECO 或正式调整规格</td></tr>
+</table>
+
+<!-- ============ 13 ============ -->
+<h2 id="s13">13. 术语详解</h2>
+<p>每个术语按“是什么 / 为什么需要 / 测试中怎么用 / 打个比方”解释。正文中的术语链接会跳到这里。</p>
+<div class="gidx noprint" id="gidx"></div>
+
+<div class="gloss-group">
+<h3>流程与平台</h3>
+
+<div class="g" id="g-term-demo" data-short="这是一个术语示例：带虚线下划线的词，悬停看简介，点击跳到这里看详解。">
+<h4>术语提示用法</h4>
+<p>正文中带虚线下划线的词都是术语。鼠标悬停显示一句话解释，点击跳转到本章对应条目，按浏览器“后退”返回原位置。</p>
+</div>
+
+<div class="g" id="g-presilicon" data-short="回片之前在仿真、FPGA、Emulator 等平台上做的验证。">
+<h4>Pre-silicon / Post-silicon<small>硅前验证 / 硅后验证</small></h4>
+<p><span class="k">是什么</span>Pre-silicon 指芯片制造出来之前，用软件仿真、形式验证、FPGA、Emulator 验证设计；Post-silicon（硅后）指拿到真实芯片后的验证。</p>
+<p><span class="k">为什么需要</span>硅前能看到所有内部信号但速度慢；硅后速度快、场景真实，但内部几乎看不见。两者互补。</p>
+<p><span class="k">测试中怎么用</span>硅前用例在硅后复用；硅上发现的问题要回到硅前平台复现、看波形。</p>
+<p><span class="k an">打个比方</span>硅前是在风洞里测车模，硅后是真车上路。</p>
+</div>
+
+<div class="g" id="g-tapeout" data-short="把最终版图交给晶圆厂制造，意味着设计冻结。">
+<h4>Tape-out<small>流片</small></h4>
+<p><span class="k">是什么</span>把最终的版图数据（GDSII/OASIS）交给晶圆厂生产。“回片”指制造好的芯片回到手上，通常要数周到数月。</p>
+<p><span class="k">为什么需要</span>它是设计冻结点，之后再改设计就要 ECO，成本高。</p>
+<p><span class="k">测试中怎么用</span>流片到回片之间的时间就是“回片前准备”窗口，要把板卡、软件、测试计划都准备好。</p>
+</div>
+
+<div class="g" id="g-rtl" data-short="寄存器传输级代码（Verilog/VHDL），描述芯片逻辑功能的源代码。">
+<h4>RTL<small>Register Transfer Level</small></h4>
+<p><span class="k">是什么</span>用 Verilog/SystemVerilog/VHDL 写的硬件描述代码，相当于芯片的“源代码”。</p>
+<p><span class="k">为什么需要</span>硅上发现的逻辑 bug 最终要追溯到 RTL 的某一行。</p>
+<p><span class="k">测试中怎么用</span>把硅上场景搬到 RTL 仿真中复现，看波形定根因；修复后在 RTL 上验证再做 ECO。</p>
+</div>
+
+<div class="g" id="g-netlist" data-short="RTL 经综合后得到的门级电路连接描述，最终用于制造。">
+<h4>Netlist<small>网表</small></h4>
+<p><span class="k">是什么</span>RTL 经过综合工具转换成的门电路连接关系，是生成版图的依据。</p>
+<p><span class="k">为什么需要</span>网表才是真正被制造的东西；RTL 后期改动未必进了网表。</p>
+<p><span class="k">测试中怎么用</span>最后一轮软件预验证要用与最终网表一致的 RTL 版本，否则软件与硅片可能对不上。</p>
+</div>
+
+<div class="g" id="g-fpga" data-short="把芯片 RTL 下载到 FPGA 上运行的原型平台，速度比仿真快很多。">
+<h4>FPGA 原型<small>FPGA Prototype</small></h4>
+<p><span class="k">是什么</span>把芯片设计（或其中一部分）综合到大容量 FPGA 上运行，频率通常几十 MHz。</p>
+<p><span class="k">为什么需要</span>比仿真快上千倍，能跑 OS 和驱动，让软件在回片前就开始开发。</p>
+<p><span class="k">测试中怎么用</span>预先调通驱动、测试框架；注意 FPGA 上的 PLL、DDR PHY、模拟 IP 往往是替代品，硅上要单独处理。</p>
+<p><span class="k an">打个比方</span>真车造出来之前先拼一辆“样车”，外形不同但开起来逻辑一样。</p>
+</div>
+
+<div class="g" id="g-emulator" data-short="专用硬件加速仿真器（Palladium/Zebu/Veloce），能完整运行芯片设计并保留调试能力。">
+<h4>Emulator<small>硬件仿真加速器</small></h4>
+<p><span class="k">是什么</span>Cadence Palladium、Synopsys Zebu、Siemens Veloce 等专用设备，能把整颗芯片设计跑到 MHz 级别，同时可以抓内部波形。</p>
+<p><span class="k">为什么需要</span>介于软件仿真（慢但全可见）和 FPGA（快但难调试）之间，适合跑 BootROM、启动流程和复现硅上 bug。</p>
+<p><span class="k">测试中怎么用</span>回片前跑通启动链；回片后用相同激励复现硅上问题，看波形找根因。</p>
+</div>
+
+<div class="g" id="g-bringup" data-short="芯片“点亮”：从第一次上电到能稳定运行代码、访问 DDR 的过程。">
+<h4>Bringup<small>点亮 / 启动调试</small></h4>
+<p><span class="k">是什么</span>回片后让芯片第一次工作起来的过程：上电、时钟、复位、JTAG 连通、BootROM、DDR。</p>
+<p><span class="k">为什么需要</span>后续所有测试都依赖它；它也是最容易暴露致命问题的阶段。</p>
+<p><span class="k">测试中怎么用</span>按 Bringup 手册逐步推进，每一步都有明确的成功标志（见第 3 章）。</p>
+<p><span class="k an">打个比方</span>新车第一次打火、挂档、起步。</p>
+</div>
+
+<div class="g" id="g-baremetal" data-short="不运行操作系统，程序直接操作硬件寄存器的运行方式。">
+<h4>Bare Metal<small>裸机</small></h4>
+<p><span class="k">是什么</span>没有 Linux 等操作系统，测试程序直接在 CPU 上运行并读写硬件寄存器。</p>
+<p><span class="k">为什么需要</span>环境简单、可控、可复现，出问题时容易判断是硬件还是软件。</p>
+<p><span class="k">测试中怎么用</span>Bringup 之后用裸机用例逐个验证各模块；OS 下的疑难问题也常回到裸机写最小复现用例。</p>
+</div>
+
+<div class="g" id="g-firmware" data-short="固化或预装在芯片/板子上的底层软件，如 BootROM、SPL、ATF、U-Boot。">
+<h4>Firmware<small>固件</small></h4>
+<p><span class="k">是什么</span>运行在操作系统之下、最贴近硬件的软件，负责启动、初始化和安全服务。</p>
+<p><span class="k">为什么需要</span>操作系统启动前必须有人把时钟、DDR、安全环境准备好。</p>
+<p><span class="k">测试中怎么用</span>固件出问题通常表现为“起不来”，用 JTAG 和 UART 早期打印定位。</p>
+</div>
+
+<div class="g" id="g-bsp" data-short="板级支持包：让操作系统能在某块板子/芯片上运行的底层软件集合。">
+<h4>BSP<small>Board Support Package，板级支持包</small></h4>
+<p><span class="k">是什么</span>启动代码、设备树、驱动、配置文件等的集合，让某个 OS 能在特定芯片和板子上运行。</p>
+<p><span class="k">为什么需要</span>它是交付给客户和量产的软件基础。</p>
+<p><span class="k">测试中怎么用</span>硅后测试中发现的 workaround 最终要沉淀到 BSP 中。</p>
+</div>
+
+<div class="g" id="g-hal" data-short="硬件抽象层：在上层代码和具体硬件/平台之间加一层统一接口。">
+<h4>HAL<small>Hardware Abstraction Layer，硬件抽象层</small></h4>
+<p><span class="k">是什么</span>一组统一的函数接口（如“打印”“延时”“读寄存器”“上报结果”），底下针对不同平台有不同实现。</p>
+<p><span class="k">为什么需要</span>让同一份测试用例在仿真、Emulator、FPGA、硅片上都能跑；在 Android 中，HAL 让上层框架不用关心具体硬件型号。</p>
+<p><span class="k">测试中怎么用</span>测试框架通过 HAL 实现 pre-silicon 用例复用；OS 阶段 Android HAL 是 Camera/Audio 等功能测试的入口。</p>
+<p><span class="k an">打个比方</span>万能充电器的转换头：电器（用例）不变，换个转换头（HAL 实现）就能插到不同国家的插座（平台）上。</p>
+</div>
+
+<div class="g" id="g-evb" data-short="评估板/验证板：用来承载芯片做测试的电路板。">
+<h4>EVB / 验证板<small>Evaluation Board / Validation Board</small></h4>
+<p><span class="k">是什么</span>EVB 是给客户评估用的参考板；验证板是内部硅后测试用的板，测试点和可调能力更多。</p>
+<p><span class="k">为什么需要</span>芯片必须焊在板子上，有电源、时钟、存储、接口才能工作。</p>
+<p><span class="k">测试中怎么用</span>每块板都要编号、记录版本和改动；问题复现时要换板对比。</p>
+</div>
+
+<div class="g" id="g-spec" data-short="规格书：定义芯片功能、寄存器、时序、电气参数的文档。">
+<h4>Spec<small>规格书</small></h4>
+<p><span class="k">是什么</span>芯片和各 IP 的设计规格，包括功能描述、寄存器手册、编程指南、电气特性。</p>
+<p><span class="k">为什么需要</span>它是判断“对还是错”的唯一依据。</p>
+<p><span class="k">测试中怎么用</span>Bug 报告要引用 Spec 章节；有时问题出在 Spec 本身。</p>
+</div>
+</div>
+
+<div class="gloss-group">
+<h3>制造、筛选与工艺</h3>
+
+<div class="g" id="g-ate" data-short="自动测试设备：量产/样片阶段对每颗芯片做电气和结构测试的专用机台。">
+<h4>ATE<small>Automatic Test Equipment，自动测试设备</small></h4>
+<p><span class="k">是什么</span>Advantest V93000、Teradyne UltraFLEX 等机台，通过探针或插座给芯片施加测试向量并检测输出。</p>
+<p><span class="k">为什么需要</span>能快速筛出制造缺陷，并给出每颗芯片的漏电、Vmin、Fmax 等数据。</p>
+<p><span class="k">测试中怎么用</span>样片先过 ATE 再上板；遇到“只有个别片失败”时，查该片的 ATE 数据。</p>
+<p><span class="k an">打个比方</span>新车下线时的出厂检测线：每辆车都过一遍刹车、灯光、尾气检测。</p>
+</div>
+
+<div class="g" id="g-corner" data-short="工艺角：因制造偏差导致芯片偏快（FF）、典型（TT）或偏慢（SS）。">
+<h4>Corner（SS / TT / FF）<small>工艺角</small></h4>
+<p><span class="k">是什么</span>制造中晶体管特性会有偏差。SS（慢-慢）速度慢、漏电小；TT 是典型；FF（快-快）速度快但漏电大。工厂可专门做 corner lot（拆分批次）产出不同角的样片。</p>
+<p><span class="k">为什么需要</span>量产芯片会分布在各个角，规格必须对所有角都成立。</p>
+<p><span class="k">测试中怎么用</span>性能/Vmin 看 SS 片（最慢），漏电/功耗看 FF 片（最耗电），都要覆盖。</p>
+<p><span class="k an">打个比方</span>同一批运动员，有人天生跑得快但饭量大（FF），有人跑得慢但省粮（SS）。</p>
+</div>
+
+<div class="g" id="g-bin" data-short="分档：按测试结果（速度、功耗）把芯片分成不同等级。">
+<h4>Bin / 分 bin<small>分档</small></h4>
+<p><span class="k">是什么</span>根据 ATE 测试结果，把芯片按能跑的频率、功耗等分为不同档次，甚至做成不同型号出售。</p>
+<p><span class="k">为什么需要</span>提高良率和收益；也给 AVS 提供每颗芯片的电压参考。</p>
+<p><span class="k">测试中怎么用</span>记录每颗样片的 bin，测性能、功耗时说明用的是哪一档。</p>
+</div>
+
+<div class="g" id="g-scan" data-short="扫描测试：把芯片内部触发器串成链，用自动生成的向量检测制造缺陷。">
+<h4>Scan / ATPG<small>扫描测试 / 自动测试向量生成</small></h4>
+<p><span class="k">是什么</span>设计时把触发器连成扫描链，ATPG 工具自动生成测试向量，在 ATE 上检测固定故障、时延故障等制造缺陷。</p>
+<p><span class="k">为什么需要</span>功能测试无法覆盖所有晶体管，扫描测试覆盖率可达 95% 以上。</p>
+<p><span class="k">测试中怎么用</span>主要在 ATE 上执行；scan pattern 也常用于 Vmin shmoo。</p>
+</div>
+
+<div class="g" id="g-mbist" data-short="存储器内建自测试：芯片内部自带电路，自动测试 SRAM 等存储器。">
+<h4>MBIST<small>Memory Built-In Self-Test</small></h4>
+<p><span class="k">是什么</span>芯片内集成的测试控制器，对片上 SRAM/ROM 自动执行 March 等算法并报告结果。</p>
+<p><span class="k">为什么需要</span>片上存储器面积大、缺陷多，必须逐 bit 检查；部分设计还支持冗余修复。</p>
+<p><span class="k">测试中怎么用</span>ATE 上执行；硅后可通过 JTAG 触发，排查 SRAM 相关问题。</p>
+</div>
+
+<div class="g" id="g-iddq" data-short="静态电源电流测试：芯片静止时的电源电流，异常偏大说明有缺陷或漏电。">
+<h4>IDDQ<small>静态电源电流</small></h4>
+<p><span class="k">是什么</span>芯片在没有翻转的静止状态下测得的电源电流。</p>
+<p><span class="k">为什么需要</span>短路、桥接等缺陷会让 IDDQ 明显偏大；它也反映漏电水平（corner）。</p>
+<p><span class="k">测试中怎么用</span>上电时电流偏大，先对比该片的 ATE IDDQ 数据，判断是芯片本身还是板子问题。</p>
+</div>
+
+<div class="g" id="g-fa" data-short="失效分析：用物理手段（X-ray、开封、显微镜）查找芯片失效的物理原因。">
+<h4>FA<small>Failure Analysis，失效分析</small></h4>
+<p><span class="k">是什么</span>对失效芯片做 X-ray、开封、热点定位、切片、电子显微镜观察等。</p>
+<p><span class="k">为什么需要</span>有些问题（工艺缺陷、封装问题）只能靠物理分析确认。</p>
+<p><span class="k">测试中怎么用</span>预留部分样片给 FA；疑似制造缺陷时送 FA。</p>
+</div>
+
+<div class="g" id="g-fib" data-short="聚焦离子束：可在芯片上直接切断或连接金属线，用于验证 ECO 修改。">
+<h4>FIB<small>Focused Ion Beam，聚焦离子束</small></h4>
+<p><span class="k">是什么</span>用离子束在芯片金属层上做微米级的切割和沉积，相当于在芯片上“飞线”。</p>
+<p><span class="k">为什么需要</span>可以在不重新流片的情况下验证 ECO 修改是否有效，或引出内部信号。</p>
+<p><span class="k">测试中怎么用</span>重要 ECO 前先在样片上做 FIB 验证；也用于物理定位问题。</p>
+</div>
+
+<div class="g" id="g-latchup" data-short="闩锁效应：寄生结构被触发后电源与地之间形成大电流通路，可能烧毁芯片。">
+<h4>Latch-up<small>闩锁效应</small></h4>
+<p><span class="k">是什么</span>CMOS 中的寄生晶闸管被触发（如上电时序错误、IO 电压超限），电源到地形成低阻通路，电流剧增。</p>
+<p><span class="k">为什么需要</span>会永久损坏芯片，必须通过设计和测试（JESD78）保证不易触发。</p>
+<p><span class="k">测试中怎么用</span>上电发烫、电流猛增时立即断电；严格遵守上电时序，首次上电限流。</p>
+</div>
+
+<div class="g" id="g-irdrop" data-short="电源网络上的电压降：电流流过电源走线电阻导致芯片内部实际电压偏低。">
+<h4>IR drop<small>电压降</small></h4>
+<p><span class="k">是什么</span>根据 V=I×R，大电流流过芯片和板子的电源网络时，到达晶体管的实际电压比电源输出低。</p>
+<p><span class="k">为什么需要</span>电压降低会让电路变慢，在高负载时导致时序失败。</p>
+<p><span class="k">测试中怎么用</span>只在高负载时出现的随机错误要怀疑 IR drop；用示波器在芯片近端测电压跌落。</p>
+</div>
+
+<div class="g" id="g-si" data-short="信号完整性：信号在走线上传输后波形是否仍然干净可靠。">
+<h4>Signal Integrity<small>信号完整性</small></h4>
+<p><span class="k">是什么</span>高速信号经过 PCB 走线、连接器后，会出现反射、串扰、衰减、振铃等失真。</p>
+<p><span class="k">为什么需要</span>信号失真会导致接收端采样错误，DDR、PCIe 等高速接口尤其敏感。</p>
+<p><span class="k">测试中怎么用</span>示波器看波形和眼图；调整驱动强度、ODT 等参数改善。</p>
+</div>
+
+<div class="g" id="g-reliability" data-short="可靠性：芯片在整个寿命期内持续正常工作的能力。">
+<h4>Reliability<small>可靠性</small></h4>
+<p><span class="k">是什么</span>评估芯片在寿命期内的失效率，涵盖老化、静电、闩锁、封装、软错误等。</p>
+<p><span class="k">为什么需要</span>产品要保证数年甚至十几年（车规）的使用寿命。</p>
+<p><span class="k">测试中怎么用</span>见第 10.4 节各项试验。</p>
+</div>
+
+<div class="g" id="g-htol" data-short="高温工作寿命试验：在高温高压下长时间运行芯片，加速老化以评估寿命。">
+<h4>HTOL<small>High Temperature Operating Life</small></h4>
+<p><span class="k">是什么</span>在高温（如 125°C）、高于额定电压下让芯片持续工作约 1000 小时，再测试是否失效。</p>
+<p><span class="k">为什么需要</span>用加速应力在短时间内模拟多年的使用，估算失效率。</p>
+<p><span class="k">测试中怎么用</span>由可靠性团队执行；HTOL 后复测 Vmin/Fmax 评估老化影响。</p>
+</div>
+</div>
+
+<div class="gloss-group">
+<h3>电源、时钟与复位</h3>
+
+<div class="g" id="g-pmic" data-short="电源管理芯片：把一路输入电源转换成芯片所需的多路不同电压。">
+<h4>PMIC<small>Power Management IC，电源管理芯片</small></h4>
+<p><span class="k">是什么</span>板上的专用芯片，内含多路 DC-DC 和 LDO，按时序输出 SoC 需要的各路电压，通常可通过 I2C/SPI 编程调压。</p>
+<p><span class="k">为什么需要</span>SoC 需要多种电压（核心、IO、DDR、模拟），而且要按顺序上电、能动态调压（DVFS）。</p>
+<p><span class="k">测试中怎么用</span>Bringup 初期常绕过 PMIC 用外部电源排除问题；DVFS 测试要验证 PMIC 调压速度和过冲。</p>
+<p><span class="k an">打个比方</span>家里的配电箱，把总闸分成厨房、卧室、空调各路，每路电压电流不同。</p>
+</div>
+
+<div class="g" id="g-dcdc" data-short="DC-DC 是高效开关电源，LDO 是低噪声线性稳压器，两者都给芯片供电。">
+<h4>DC-DC / LDO<small>开关稳压器 / 低压差线性稳压器</small></h4>
+<p><span class="k">是什么</span>DC-DC 效率高但有开关纹波；LDO 效率较低但输出干净。</p>
+<p><span class="k">为什么需要</span>大电流的 CPU 核心用 DC-DC，对噪声敏感的 PLL、模拟电路用 LDO。</p>
+<p><span class="k">测试中怎么用</span>用示波器测纹波；PLL 抖动大时检查其 LDO 供电。</p>
+</div>
+
+<div class="g" id="g-shunt" data-short="检流电阻：串在电源路径上的小阻值精密电阻，通过测两端电压算出电流。">
+<h4>Shunt Resistor<small>检流电阻 / 分流电阻</small></h4>
+<p><span class="k">是什么</span>毫欧到欧姆级的精密电阻，串联在每路电源上，电流 = 两端电压 ÷ 电阻值。</p>
+<p><span class="k">为什么需要</span>功耗测量和异常电流定位都依赖它。</p>
+<p><span class="k">测试中怎么用</span>接电源分析仪或采集卡；阻值太大会造成压降，太小则分辨率不够。</p>
+</div>
+
+<div class="g" id="g-powerseq" data-short="上电时序：多路电源必须按规定顺序和时间间隔依次上电/断电。">
+<h4>Power Sequence<small>上电时序</small></h4>
+<p><span class="k">是什么</span>Spec 规定的各路电源上电先后顺序、间隔，以及与复位释放的关系。</p>
+<p><span class="k">为什么需要</span>顺序错误可能导致 IO 倒灌电流、闩锁、内部状态异常。</p>
+<p><span class="k">测试中怎么用</span>用示波器多通道同时抓各路电源和复位，核对时序（见图 2）。</p>
+</div>
+
+<div class="g" id="g-crystal" data-short="晶振：提供稳定基准频率（如 24MHz）的元件，是芯片所有时钟的源头。">
+<h4>Crystal / OSC<small>晶振</small></h4>
+<p><span class="k">是什么</span>利用石英谐振产生稳定频率的元件，为 PLL 提供参考时钟。</p>
+<p><span class="k">为什么需要</span>没有时钟芯片就不会动。</p>
+<p><span class="k">测试中怎么用</span>Bringup 先确认晶振起振；怀疑晶振时用信号源注入外部时钟。</p>
+<p><span class="k an">打个比方</span>乐队的节拍器。</p>
+</div>
+
+<div class="g" id="g-pll" data-short="锁相环：把低频参考时钟倍频成 CPU、总线等需要的高频时钟。">
+<h4>PLL<small>Phase-Locked Loop，锁相环</small></h4>
+<p><span class="k">是什么</span>模拟电路，把 24MHz 等参考时钟倍频到 GHz 级别，并保持相位锁定。</p>
+<p><span class="k">为什么需要</span>芯片内各模块需要不同的高频时钟，都由 PLL 产生。</p>
+<p><span class="k">测试中怎么用</span>检查 lock 状态寄存器、通过 CLKOUT 测频率；PLL 锁不住时查参考时钟、电源噪声和配置参数。</p>
+<p><span class="k an">打个比方</span>变速自行车的齿轮组，把慢慢踩的脚踏变成飞快的车轮转速。</p>
+</div>
+
+<div class="g" id="g-clkout" data-short="时钟输出引脚：把芯片内部时钟分频后送到引脚，便于用示波器测量。">
+<h4>CLKOUT<small>时钟输出</small></h4>
+<p><span class="k">是什么</span>芯片上可配置的调试引脚，能输出内部选定时钟（通常经过分频）。</p>
+<p><span class="k">为什么需要</span>内部时钟无法直接测量，CLKOUT 是验证 PLL 和时钟树配置的窗口。</p>
+<p><span class="k">测试中怎么用</span>Bringup 时依次输出各 PLL 时钟，用示波器或频率计确认。</p>
+</div>
+
+<div class="g" id="g-ssc" data-short="展频时钟：让时钟频率小幅周期性变化，以降低电磁干扰。">
+<h4>SSC<small>Spread Spectrum Clocking，展频</small></h4>
+<p><span class="k">是什么</span>时钟频率在中心值附近按小幅度（如 0.5%）缓慢调制。</p>
+<p><span class="k">为什么需要</span>把能量分散到更宽的频带，降低 EMI 峰值，帮助通过电磁兼容认证。</p>
+<p><span class="k">测试中怎么用</span>验证开启展频后 PCIe/USB 等接口仍能稳定工作。</p>
+</div>
+
+<div class="g" id="g-por" data-short="上电复位：电源稳定后自动产生复位信号，让芯片从确定的初始状态开始。">
+<h4>POR / 复位<small>Power-On Reset</small></h4>
+<p><span class="k">是什么</span>复位把芯片内部所有状态置为初始值。POR 是上电时自动产生的复位，此外还有外部复位引脚、看门狗复位、软件复位等。</p>
+<p><span class="k">为什么需要</span>电源和时钟稳定之前芯片状态不确定，必须复位后才能可靠启动。</p>
+<p><span class="k">测试中怎么用</span>示波器看复位信号释放时机；读复位原因寄存器判断上次是因为什么复位。</p>
+</div>
+
+<div class="g" id="g-wdt" data-short="看门狗：软件需要定期“喂狗”，否则超时后自动复位芯片。">
+<h4>Watchdog<small>看门狗</small></h4>
+<p><span class="k">是什么</span>一个倒计时定时器，软件必须定期重置它；软件卡死没重置时，计时到零就复位系统。</p>
+<p><span class="k">为什么需要</span>防止系统永久死机。</p>
+<p><span class="k">测试中怎么用</span>验证超时复位功能；自动化测试中用看门狗让挂死的用例自动恢复。</p>
+<p><span class="k an">打个比方</span>值班员要每隔一段时间按一次按钮，不按就自动报警。</p>
+</div>
+
+<div class="g" id="g-pmu-power" data-short="电源管理单元：芯片内部负责电源域开关、低功耗模式切换和唤醒的控制器。">
+<h4>PMU（电源管理单元）<small>Power Management Unit</small></h4>
+<p><span class="k">是什么</span>芯片内控制各电源域上下电、时钟开关、低功耗模式进出和唤醒的硬件状态机，有时配有小 MCU。注意 PMU 也可能指性能监控单元，见下一条。</p>
+<p><span class="k">为什么需要</span>低功耗管理需要严格的顺序（隔离、保存、断电、唤醒、恢复）。</p>
+<p><span class="k">测试中怎么用</span>休眠唤醒失败时读 PMU 状态寄存器，看状态机卡在哪一步。</p>
+</div>
+
+<div class="g" id="g-pmu-perf" data-short="性能监控单元：CPU/总线内的硬件计数器，统计指令数、Cache miss 等事件。">
+<h4>PMU（性能监控单元）<small>Performance Monitoring Unit</small></h4>
+<p><span class="k">是什么</span>CPU 内部的一组计数器，可统计周期数、指令数、Cache/TLB miss、分支预测失败等事件。</p>
+<p><span class="k">为什么需要</span>性能分析的基础数据来源，能看出瓶颈在哪里。</p>
+<p><span class="k">测试中怎么用</span>用 <code>perf</code>、Streamline 采集；与性能模型的统计值对比找性能 bug。</p>
+</div>
+</div>
+
+<div class="gloss-group">
+<h3>调试与启动</h3>
+
+<div class="g" id="g-jtag" data-short="IEEE 1149.1 标准调试/测试接口，用 4–5 根线控制芯片、读写内部状态。">
+<h4>JTAG<small>Joint Test Action Group（IEEE 1149.1）</small></h4>
+<p><span class="k">是什么</span>最常用的芯片调试接口，信号线有 TCK（时钟）、TMS（模式）、TDI（数据入）、TDO（数据出）、可选 TRST（复位）。最初用于板级边界扫描测试，现在主要用于调试。</p>
+<p><span class="k">为什么需要</span>芯片刚回来时没有任何软件，JTAG 是唯一能“看进去”的通道：暂停 CPU、读写寄存器和内存、下载程序。</p>
+<p><span class="k">测试中怎么用</span>Bringup 第一个里程碑就是 JTAG 读到 IDCODE；之后用于下载裸机程序、调试挂死、读状态寄存器。</p>
+<p><span class="k an">打个比方</span>医生的内窥镜：不用开刀，从一个小口进去看内部情况。</p>
+</div>
+
+<div class="g" id="g-swd" data-short="ARM 的两线调试接口，功能与 JTAG 类似但引脚更少。">
+<h4>SWD<small>Serial Wire Debug</small></h4>
+<p><span class="k">是什么</span>ARM 定义的两线（SWDIO + SWCLK）调试协议，常见于 MCU。</p>
+<p><span class="k">为什么需要</span>节省引脚，功能与 JTAG 调试相当。</p>
+<p><span class="k">测试中怎么用</span>用法与 JTAG 相同，连接调试器即可。</p>
+</div>
+
+<div class="g" id="g-tap" data-short="TAP 是 JTAG 的状态机控制器；IDCODE 是芯片通过 JTAG 报告的身份编号。">
+<h4>TAP / IDCODE<small>Test Access Port / 器件识别码</small></h4>
+<p><span class="k">是什么</span>TAP 是每个 JTAG 设备内部的控制器；IDCODE 是 32 位编号，包含厂商、器件、版本。</p>
+<p><span class="k">为什么需要</span>能读出 IDCODE 说明 JTAG 物理链路通了，是调试的第一步。</p>
+<p><span class="k">测试中怎么用</span>读不到 IDCODE 时，查电平、TCK 频率、TRST、调试电源域、安全锁定。</p>
+</div>
+
+<div class="g" id="g-dap" data-short="调试访问端口：JTAG/SWD 进入芯片后的总入口，下挂访问各核和总线的通道。">
+<h4>DAP<small>Debug Access Port</small></h4>
+<p><span class="k">是什么</span>ARM CoreSight 的调试入口，由 DP（Debug Port，连外部调试器）和多个 AP（Access Port，通向不同目标）组成。</p>
+<p><span class="k">为什么需要</span>把一个外部调试接口分发到多个 CPU 核、多条总线。</p>
+<p><span class="k">测试中怎么用</span>能连 DAP 后扫描 ROM Table，识别所有调试组件。</p>
+</div>
+
+<div class="g" id="g-memap" data-short="DAP 下的总线访问端口，让调试器绕过 CPU 直接读写系统内存和寄存器。">
+<h4>MEM-AP / AXI-AP<small>内存访问端口</small></h4>
+<p><span class="k">是什么</span>DAP 中的一种 AP，可以直接在系统总线（AXI/AHB/APB）上发起读写。</p>
+<p><span class="k">为什么需要</span>CPU 跑飞、挂死或还没启动时，调试器仍能读写内存和外设寄存器。</p>
+<p><span class="k">测试中怎么用</span>下载程序到 SRAM、CPU 挂死后读错误寄存器——是 Bringup 的救命通道。</p>
+</div>
+
+<div class="g" id="g-coresight" data-short="ARM 的片上调试与跟踪架构，包含 DAP、ETM、CTI、ROM Table 等组件。">
+<h4>CoreSight<small>ARM 调试跟踪架构</small></h4>
+<p><span class="k">是什么</span>ARM 定义的一整套片上调试/跟踪组件和互连标准：DAP、ROM Table（组件目录）、ETM（指令跟踪）、CTI（交叉触发）、Funnel/ETB/TPIU（trace 汇聚与输出）等。</p>
+<p><span class="k">为什么需要</span>多核 SoC 需要统一、可发现的调试基础设施，调试器才能自动识别和控制。</p>
+<p><span class="k">测试中怎么用</span>Bringup 时扫描 ROM Table 确认所有组件可见；调试脚本里要描述 CoreSight 拓扑。</p>
+<p><span class="k an">打个比方</span>大楼的监控系统：摄像头（ETM）、对讲机（CTI）、监控室总入口（DAP）、楼层索引表（ROM Table）。</p>
+</div>
+
+<div class="g" id="g-trace" data-short="跟踪：实时记录 CPU 执行过的指令流/数据流，用于回溯问题和性能分析。">
+<h4>Trace（ETM / ETB / TPIU）<small>指令跟踪</small></h4>
+<p><span class="k">是什么</span>ETM 实时压缩记录 CPU 执行路径；ETB/ETF/ETR 是片上存 trace 的缓冲区；TPIU 把 trace 输出到外部引脚给 trace 设备采集。</p>
+<p><span class="k">为什么需要</span>断点会改变时序，有些问题一打断点就消失；trace 不打断执行，能看到挂死前最后发生了什么。</p>
+<p><span class="k">测试中怎么用</span>随机挂死后读片上 trace buffer 回溯；用外部 trace 做长时间性能分析。</p>
+<p><span class="k an">打个比方</span>飞机的黑匣子。</p>
+</div>
+
+<div class="g" id="g-cti" data-short="交叉触发接口：让多个核/调试组件之间同步触发暂停、启动等事件。">
+<h4>CTI<small>Cross Trigger Interface</small></h4>
+<p><span class="k">是什么</span>CoreSight 组件，把一个核的调试事件（如断点命中）广播给其他核或 trace 组件。</p>
+<p><span class="k">为什么需要</span>多核问题需要在同一时刻冻结所有核的状态。</p>
+<p><span class="k">测试中怎么用</span>配置“任一核命中断点则全部暂停”，调试多核一致性问题。</p>
+</div>
+
+<div class="g" id="g-uart" data-short="通用异步串口：最简单的串行通信接口，硅后测试中主要用作调试打印控制台。">
+<h4>UART<small>通用异步收发器</small></h4>
+<p><span class="k">是什么</span>两根线（TX/RX）的异步串口，经 USB 转串口连到电脑。</p>
+<p><span class="k">为什么需要</span>初始化简单，往往是第一个能工作的外设，用来输出日志和交互命令。</p>
+<p><span class="k">测试中怎么用</span>BootROM 状态、测试结果、内核日志都从 UART 输出；自动化脚本解析 UART 日志。</p>
+</div>
+
+<div class="g" id="g-bootrom" data-short="固化在芯片内的第一段启动代码，上电后最先执行，无法修改。">
+<h4>BootROM<small>片上启动只读存储器</small></h4>
+<p><span class="k">是什么</span>制造时写死在芯片里的代码。上电复位后 CPU 从这里开始执行，负责最基本的初始化、读取 Boot 模式、从外部存储加载下一级程序，并可执行 Secure Boot 校验。</p>
+<p><span class="k">为什么需要</span>芯片刚上电时外部存储里的程序还没法直接执行，需要一段内置代码“引导”。</p>
+<p><span class="k">测试中怎么用</span>验证各 Boot 模式和 Secure Boot；卡住时 JTAG 看 PC 并对照 ROM 符号表。因为改不了，有 bug 只能 ECO 或绕过。</p>
+<p><span class="k an">打个比方</span>汽车的点火开关电路：出厂固定，钥匙一拧，它去唤醒发动机电脑。</p>
+</div>
+
+<div class="g" id="g-bootmode" data-short="启动模式：由引脚或 eFuse 决定芯片从哪里加载程序（eMMC、SPI、USB 等）。">
+<h4>Boot Mode<small>启动模式</small></h4>
+<p><span class="k">是什么</span>BootROM 根据拨码引脚或 eFuse 选择从 eMMC、SD、SPI NOR、NAND、UFS、USB、UART、PCIe 中的哪个加载程序。</p>
+<p><span class="k">为什么需要</span>不同产品用不同存储；USB/UART 下载模式还是板子“变砖”后的救援通道。</p>
+<p><span class="k">测试中怎么用</span>逐个验证每种 Boot 模式；自动化测试中用继电器切换。</p>
+</div>
+
+<div class="g" id="g-spl" data-short="二级程序加载器：BootROM 之后运行的小程序，主要负责初始化 DDR 并加载更大的程序。">
+<h4>SPL / BL2<small>Secondary Program Loader</small></h4>
+<p><span class="k">是什么</span>能放进片上 SRAM 的小型启动程序（U-Boot 中叫 SPL，ARM 可信固件中叫 BL2），负责时钟配置、DDR 初始化与 training，然后加载 ATF、U-Boot 等。</p>
+<p><span class="k">为什么需要</span>DDR 初始化前只有容量很小的 SRAM 可用，大程序放不下。</p>
+<p><span class="k">测试中怎么用</span>DDR 调试主要在这一层进行。</p>
+</div>
+
+<div class="g" id="g-atf" data-short="ARM 可信固件（TF-A）：运行在最高特权级，提供 PSCI、安全世界切换等服务。">
+<h4>ATF / TF-A / BL31<small>Trusted Firmware-A</small></h4>
+<p><span class="k">是什么</span>ARM 官方开源固件，运行在 EL3（最高特权级），常驻内存，提供 CPU 上下电（PSCI）、安全/非安全世界切换、安全配置。</p>
+<p><span class="k">为什么需要</span>Linux 不能直接控制核的上下电和安全配置，需要通过 ATF。</p>
+<p><span class="k">测试中怎么用</span>CPU 热插拔、系统休眠唤醒的问题经常要在 ATF 中定位。</p>
+</div>
+
+<div class="g" id="g-psci" data-short="电源状态协调接口：OS 请求固件开关 CPU 核、进入休眠的标准接口。">
+<h4>PSCI<small>Power State Coordination Interface</small></h4>
+<p><span class="k">是什么</span>ARM 定义的标准调用接口，OS 通过它请求 CPU_ON、CPU_OFF、CPU_SUSPEND、SYSTEM_RESET 等。</p>
+<p><span class="k">为什么需要</span>统一 OS 与固件之间的电源管理接口。</p>
+<p><span class="k">测试中怎么用</span>多核启动、CPU 热插拔、cpuidle 测试都依赖 PSCI。</p>
+</div>
+
+<div class="g" id="g-uboot" data-short="开源引导加载程序，负责加载并启动 Linux 内核，也提供丰富的命令行调试工具。">
+<h4>U-Boot<small>通用引导加载程序</small></h4>
+<p><span class="k">是什么</span>最常用的嵌入式 bootloader，支持从多种介质加载内核，自带内存读写、存储、网络、USB 等命令。</p>
+<p><span class="k">为什么需要</span>启动 Linux 前的最后一级，也是方便的硬件调试环境。</p>
+<p><span class="k">测试中怎么用</span>在 U-Boot 命令行快速测 eMMC、网络、USB；<code>md</code>/<code>mw</code> 读写寄存器。</p>
+</div>
+
+<div class="g" id="g-dts" data-short="设备树：描述板上硬件（地址、中断、时钟）的数据文件，供 Linux/U-Boot 读取。">
+<h4>Device Tree<small>设备树</small></h4>
+<p><span class="k">是什么</span>用文本（.dts）描述 SoC 和板子上有哪些设备、寄存器地址、中断号、时钟、电源依赖，编译成 .dtb 交给内核。</p>
+<p><span class="k">为什么需要</span>同一个内核可以通过不同设备树支持不同板子。</p>
+<p><span class="k">测试中怎么用</span>驱动 probe 失败时首先检查设备树配置。</p>
+</div>
+
+<div class="g" id="g-earlycon" data-short="earlycon 让内核极早期就能输出日志；pstore/ramoops 把死机前的日志保存到重启后。">
+<h4>earlycon / pstore / ramoops<small>早期控制台 / 持久化日志</small></h4>
+<p><span class="k">是什么</span>earlycon 在正式串口驱动加载前就直接写 UART 打印；pstore/ramoops 把内核崩溃日志写到一块重启不清除的内存。</p>
+<p><span class="k">为什么需要</span>内核早期挂死或随机死机时，普通日志来不及输出。</p>
+<p><span class="k">测试中怎么用</span>Bringup Linux 时开 earlycon；长稳测试开 ramoops，死机重启后读 <code>/sys/fs/pstore</code>。</p>
+</div>
+
+<div class="g" id="g-cts" data-short="一致性测试套件：Android CTS/VTS、Linux LTP/kselftest、ARM ACS 等标准测试集。">
+<h4>CTS / VTS / LTP / kselftest / ACS<small>一致性与回归测试套件</small></h4>
+<p><span class="k">是什么</span>CTS/VTS 是 Google 的 Android 兼容性和 Vendor 测试；LTP 是 Linux 测试项目；kselftest 是内核自带测试；ACS 是 ARM 架构合规测试。</p>
+<p><span class="k">为什么需要</span>用业界标准测试集系统地验证平台功能，也是产品认证要求。</p>
+<p><span class="k">测试中怎么用</span>OS 阶段定期跑，作为回归和出口标准的一部分。</p>
+</div>
+</div>
+
+<div class="gloss-group">
+<h3>存储与 DDR</h3>
+
+<div class="g" id="g-ddr" data-short="双倍数据率动态内存（DDR4/LPDDR4/LPDDR5 等），芯片的主内存。">
+<h4>DDR<small>Double Data Rate SDRAM</small></h4>
+<p><span class="k">是什么</span>在时钟上升沿和下降沿都传输数据的动态内存，是 SoC 的主内存。LPDDR 是低功耗版本，常用于手机。</p>
+<p><span class="k">为什么需要</span>片上 SRAM 只有几百 KB 到几 MB，OS 和应用需要 GB 级内存。</p>
+<p><span class="k">测试中怎么用</span>DDR 初始化是 Bringup 的关键卡点；之后做带宽、延迟、稳定性、颗粒兼容性测试。</p>
+</div>
+
+<div class="g" id="g-phy" data-short="物理层：负责把数字信号转换为线上电信号的模拟/混合电路（DDR PHY、PCIe PHY 等）。">
+<h4>PHY<small>Physical Layer，物理层</small></h4>
+<p><span class="k">是什么</span>高速接口中直接驱动和接收线上信号的电路，包含驱动器、接收器、延迟线、校准电路等。控制器负责“说什么”，PHY 负责“怎么发出去”。</p>
+<p><span class="k">为什么需要</span>高速信号需要精确的电平、时序和阻抗匹配，必须专门的模拟电路处理。</p>
+<p><span class="k">测试中怎么用</span>PHY 在 FPGA 上一般无法真实验证，是硅后重点；通过 training 结果、眼图扫描评估其裕量。</p>
+<p><span class="k an">打个比方</span>控制器是写信的人，PHY 是邮递员和道路。</p>
+</div>
+
+<div class="g" id="g-training" data-short="DDR 训练：上电后自动扫描每根信号线的延迟和电压门限，找到最佳采样点。">
+<h4>DDR Training<small>DDR 训练 / 校准</small></h4>
+<p><span class="k">是什么</span>DDR 初始化时，控制器和 PHY 通过一系列测试读写，自动调整每根数据线、时钟线的延迟和参考电压。包括 Write Leveling、Read Gate、读写眼图训练、Vref 训练、CA 训练等。</p>
+<p><span class="k">为什么需要</span>每块板走线长度不同、每颗芯片和颗粒特性不同、温度电压在变，固定参数无法在所有情况下工作。</p>
+<p><span class="k">测试中怎么用</span>打印每个 byte lane 的训练结果；training 失败时先降频、降配置；用 2D 眼图评估裕量。</p>
+<p><span class="k an">打个比方</span>合唱团开唱前，每位歌手都要对准音高和节拍。</p>
+</div>
+
+<div class="g" id="g-eye" data-short="眼图：大量信号波形叠加后形成的“眼睛”形状，眼睁得越大信号质量越好。">
+<h4>Eye Diagram<small>眼图</small></h4>
+<p><span class="k">是什么</span>把高速信号的很多个比特周期叠加显示，中间空白区域形似眼睛。眼宽代表时序裕量，眼高代表电压裕量。</p>
+<p><span class="k">为什么需要</span>直观衡量信号质量和可靠采样的范围。</p>
+<p><span class="k">测试中怎么用</span>示波器测量，或用 PHY 内置的眼图扫描功能绘制。</p>
+</div>
+
+<div class="g" id="g-vref" data-short="参考电压：接收端判断信号是 0 还是 1 的电压门限。">
+<h4>Vref<small>参考电压</small></h4>
+<p><span class="k">是什么</span>接收器用来比较的门限电压，高于它判为 1，低于判为 0。DDR4/LPDDR4 以后需要训练得到最佳 Vref。</p>
+<p><span class="k">为什么需要</span>门限放在眼图中心才能获得最大的电压裕量。</p>
+<p><span class="k">测试中怎么用</span>Vref 训练、Vref × 时序二维扫描。</p>
+</div>
+
+<div class="g" id="g-odt" data-short="片上端接：在接收端芯片内部加匹配电阻，减少信号反射。">
+<h4>ODT<small>On-Die Termination，片上端接</small></h4>
+<p><span class="k">是什么</span>集成在 DDR 颗粒或 SoC 内的可配置端接电阻。</p>
+<p><span class="k">为什么需要</span>高速信号在线路末端会反射造成振铃，端接电阻能吸收反射。</p>
+<p><span class="k">测试中怎么用</span>调整 ODT 阻值和驱动强度改善信号质量，用示波器观察效果。</p>
+</div>
+
+<div class="g" id="g-rank" data-short="Rank 是共享数据线、可被同时选中的一组 DDR 颗粒；通道是独立的 DDR 接口。">
+<h4>Rank / Channel<small>内存排 / 通道</small></h4>
+<p><span class="k">是什么</span>一个通道（channel）是一组独立的数据和命令线；一个通道上可以挂多个 rank，分时访问。</p>
+<p><span class="k">为什么需要</span>多通道提高带宽，多 rank 增加容量。</p>
+<p><span class="k">测试中怎么用</span>DDR 调试时先用单通道、单 rank 简化问题，再逐步打开。</p>
+</div>
+
+<div class="g" id="g-ecc" data-short="纠错码：存数据时额外存校验位，能自动纠正单 bit 错误、检测双 bit 错误。">
+<h4>ECC<small>Error Correcting Code</small></h4>
+<p><span class="k">是什么</span>为每组数据附加校验位（如 64 位数据加 8 位 ECC），读出时自动纠正 1 bit 错误并检测 2 bit 错误。</p>
+<p><span class="k">为什么需要</span>提高内存和缓存的可靠性，服务器、车规芯片必备。</p>
+<p><span class="k">测试中怎么用</span>用错误注入功能验证纠错和上报；长稳测试中统计 ECC 纠错次数，判断 DDR 裕量。</p>
+</div>
+
+<div class="g" id="g-sram" data-short="静态随机存储器：芯片内部的高速小容量内存，上电即可用，无需初始化。">
+<h4>SRAM<small>Static RAM，片上静态内存</small></h4>
+<p><span class="k">是什么</span>集成在芯片内部的内存，速度快、不需要刷新和 training。</p>
+<p><span class="k">为什么需要</span>DDR 初始化前，程序只能在 SRAM 中运行。</p>
+<p><span class="k">测试中怎么用</span>Bringup 时先把小程序下载到 SRAM 运行；SRAM 本身用 MBIST 和 March 测试验证。</p>
+</div>
+
+<div class="g" id="g-memtest" data-short="内存测试算法（如 March C-）：按特定顺序读写每个地址，检测各种存储故障。">
+<h4>March 测试 / 内存测试<small>Memory Test</small></h4>
+<p><span class="k">是什么</span>March C- 等算法按升序/降序依次对每个地址执行“读 0 写 1、读 1 写 0”等操作，能检测固定故障、耦合故障、地址译码故障。还有 Walking 1/0、随机数据等方法。</p>
+<p><span class="k">为什么需要</span>系统性地确认每个存储单元和每根地址/数据线都工作正常。</p>
+<p><span class="k">测试中怎么用</span>DDR training 后立即运行；工具有 <code>memtester</code>、<code>stressapptest</code>。</p>
+</div>
+
+<div class="g" id="g-mmu" data-short="内存管理单元：把程序使用的虚拟地址翻译成物理地址，并控制访问权限和缓存属性。">
+<h4>MMU<small>Memory Management Unit</small></h4>
+<p><span class="k">是什么</span>CPU 中根据页表进行地址翻译和权限检查的硬件，同时决定每块内存是否可缓存、是否为设备内存。</p>
+<p><span class="k">为什么需要</span>操作系统依赖它实现进程隔离和虚拟内存；裸机也需要它来设置正确的内存属性。</p>
+<p><span class="k">测试中怎么用</span>页表属性设错（如把外设寄存器设为可缓存）会导致诡异问题；测试各种页大小和 TLB 维护。</p>
+</div>
+
+<div class="g" id="g-tlb" data-short="页表缓存：缓存最近的地址翻译结果，加速 MMU。">
+<h4>TLB<small>Translation Lookaside Buffer</small></h4>
+<p><span class="k">是什么</span>MMU 内的小缓存，保存最近用过的虚拟地址到物理地址的映射。</p>
+<p><span class="k">为什么需要</span>每次都查内存中的页表太慢。</p>
+<p><span class="k">测试中怎么用</span>修改页表后必须执行 TLB 失效指令；测试 TLB 维护、TLB miss 对性能的影响。</p>
+</div>
+
+<div class="g" id="g-cache" data-short="缓存：CPU 附近的高速小存储，保存最近常用的数据，减少访问 DDR 的次数。">
+<h4>Cache<small>高速缓存</small></h4>
+<p><span class="k">是什么</span>分 L1/L2/L3 多级，越靠近 CPU 越快越小。维护操作有 clean（把脏数据写回内存）和 invalidate（丢弃缓存内容）。</p>
+<p><span class="k">为什么需要</span>DDR 访问要上百个周期，Cache 命中只要几个周期。</p>
+<p><span class="k">测试中怎么用</span>Cache 开关两种模式都测；DMA 前后要做正确的维护操作；关 Cache 是判断一致性问题的常用手段。</p>
+<p><span class="k an">打个比方</span>办公桌上的文件（Cache）vs 档案室的文件（DDR）。</p>
+</div>
+
+<div class="g" id="g-coherency" data-short="缓存一致性：多个核和 DMA 看到同一地址的数据必须一致。">
+<h4>Cache Coherency<small>缓存一致性</small></h4>
+<p><span class="k">是什么</span>多个 CPU 核各有 Cache，DMA 直接访问内存；必须保证所有观察者看到的数据一致。硬件一致性通过 snoop 协议实现，软件一致性靠 clean/invalidate 和内存屏障。</p>
+<p><span class="k">为什么需要</span>不一致会导致读到旧数据，表现为偶发、难复现的数据错误。</p>
+<p><span class="k">测试中怎么用</span>多核一致性压力测试、litmus 测试；DMA 用例检查软件维护操作是否正确。</p>
+<p><span class="k an">打个比方</span>多人各自抄了一份通讯录，有人改了电话号码，其他人的抄本也得更新。</p>
+</div>
+</div>
+
+<div class="gloss-group">
+<h3>总线、外设与多媒体</h3>
+
+<div class="g" id="g-interconnect" data-short="总线/片上网络（NoC）：连接 CPU、内存、外设等所有模块的数据通路。">
+<h4>Interconnect / NoC<small>总线互联 / 片上网络</small></h4>
+<p><span class="k">是什么</span>SoC 内部把各个 master（CPU、DMA、GPU）和 slave（内存、外设）连接起来的结构，复杂芯片使用片上网络。</p>
+<p><span class="k">为什么需要</span>所有数据交换都经过它，它的带宽、延迟、仲裁策略直接影响性能和正确性。</p>
+<p><span class="k">测试中怎么用</span>地址映射矩阵测试、并发带宽测试、QoS 测试、死锁压力测试。</p>
+<p><span class="k an">打个比方</span>城市的道路网络和红绿灯系统。</p>
+</div>
+
+<div class="g" id="g-axi" data-short="ARM AMBA 总线协议中的高性能接口标准。">
+<h4>AXI / AHB / APB<small>AMBA 总线协议</small></h4>
+<p><span class="k">是什么</span>ARM 定义的片上总线标准：AXI 用于高性能（支持多个未完成传输），AHB 用于中等性能，APB 用于低速外设寄存器访问。</p>
+<p><span class="k">为什么需要</span>标准接口让不同厂商的 IP 能拼在一起。</p>
+<p><span class="k">测试中怎么用</span>总线错误响应（SLVERR/DECERR）、超时问题都和协议行为有关。</p>
+</div>
+
+<div class="g" id="g-qos" data-short="服务质量：为不同 master 设置优先级和带宽保证，避免关键模块“饿死”。">
+<h4>QoS<small>Quality of Service</small></h4>
+<p><span class="k">是什么</span>互联和 DDR 控制器中的优先级、带宽限制、延迟目标等机制。</p>
+<p><span class="k">为什么需要</span>显示控制器如果拿不到数据就会画面撕裂，必须优先于后台任务。</p>
+<p><span class="k">测试中怎么用</span>满负载并发下检查显示是否 underflow、各 master 带宽是否符合配置。</p>
+</div>
+
+<div class="g" id="g-dma" data-short="直接内存访问：不经 CPU，由专门控制器在内存和外设之间搬运数据。">
+<h4>DMA<small>Direct Memory Access</small></h4>
+<p><span class="k">是什么</span>CPU 设置好源地址、目的地址和长度后，DMA 控制器自己完成数据搬运，结束后发中断。</p>
+<p><span class="k">为什么需要</span>解放 CPU，提高大数据搬运效率。</p>
+<p><span class="k">测试中怎么用</span>内存拷贝和外设 DMA 用例；注意 Cache 一致性（见图 3）。</p>
+<p><span class="k an">打个比方</span>老板（CPU）把搬家清单交给搬家公司（DMA），自己去忙别的，搬完了打电话通知。</p>
+</div>
+
+<div class="g" id="g-gic" data-short="中断控制器（ARM GIC / RISC-V PLIC）：汇总所有中断，按优先级分发给 CPU。">
+<h4>GIC / PLIC / 中断控制器<small>Interrupt Controller</small></h4>
+<p><span class="k">是什么</span>收集外设发出的中断信号，按优先级、目标核、安全属性分发给 CPU。</p>
+<p><span class="k">为什么需要</span>外设靠中断通知 CPU 事件发生，避免 CPU 不停轮询。</p>
+<p><span class="k">测试中怎么用</span>每个中断源都要触发一次；中断不来时检查中断号映射、触发类型、使能位。</p>
+</div>
+
+<div class="g" id="g-register" data-short="寄存器：外设中软件可读写的控制/状态单元；W1C 表示写 1 清零。">
+<h4>寄存器 / 读写属性（RW、RO、W1C）<small>Register</small></h4>
+<p><span class="k">是什么</span>每个外设有一组映射到内存地址的寄存器，软件通过读写它们来配置和控制硬件。属性有 RW（可读写）、RO（只读）、W1C（写 1 清零，常用于中断状态）等。</p>
+<p><span class="k">为什么需要</span>它是软件与硬件交互的唯一接口。</p>
+<p><span class="k">测试中怎么用</span>寄存器默认值和读写属性测试是每个 IP 的第一个用例。</p>
+</div>
+
+<div class="g" id="g-pinmux" data-short="管脚复用：一个物理引脚可以配置成不同功能（GPIO、UART、SPI 等）。">
+<h4>Pinmux<small>管脚复用</small></h4>
+<p><span class="k">是什么</span>芯片引脚数量有限，一个引脚可以通过寄存器选择承担不同外设的功能。</p>
+<p><span class="k">为什么需要</span>同一颗芯片适配不同产品的需求。</p>
+<p><span class="k">测试中怎么用</span>外设“完全没反应”时，先检查 pinmux 是否配置到了正确功能。</p>
+</div>
+
+<div class="g" id="g-i2c" data-short="两线低速串行总线，常用于连接传感器、PMIC、EEPROM。">
+<h4>I2C / I3C<small>Inter-Integrated Circuit</small></h4>
+<p><span class="k">是什么</span>只用 SCL（时钟）和 SDA（数据）两根线的低速总线，可挂多个设备；I3C 是更快的新版本。</p>
+<p><span class="k">为什么需要</span>控制 PMIC、读传感器等。</p>
+<p><span class="k">测试中怎么用</span>逻辑分析仪解码波形；测试各速率、多主仲裁、总线挂死恢复。</p>
+</div>
+
+<div class="g" id="g-spi" data-short="四线同步串行接口，常用于连接 Flash、显示屏等。">
+<h4>SPI / QSPI<small>Serial Peripheral Interface</small></h4>
+<p><span class="k">是什么</span>时钟、片选、主出、主入四根线的同步串口；QSPI 用 4 根数据线提高速度，常用于 NOR Flash 启动。</p>
+<p><span class="k">为什么需要</span>简单高效，Boot Flash 常用。</p>
+<p><span class="k">测试中怎么用</span>测试 4 种时钟模式、各频率、DMA、XIP（直接从 Flash 执行代码）。</p>
+</div>
+
+<div class="g" id="g-pcie" data-short="高速串行扩展总线，用于连接网卡、SSD、加速卡等。">
+<h4>PCIe<small>PCI Express</small></h4>
+<p><span class="k">是什么</span>点对点高速串行接口，按代（Gen1–Gen6）和通道数（x1–x16）提供不同带宽。</p>
+<p><span class="k">为什么需要</span>连接高性能外部设备。</p>
+<p><span class="k">测试中怎么用</span>链路训练、速率协商、低功耗状态、合规性测试，常用协议分析仪抓包。</p>
+</div>
+
+<div class="g" id="g-mipi" data-short="移动产业处理器接口：手机上连接摄像头（CSI）和显示屏（DSI）的标准接口。">
+<h4>MIPI（CSI / DSI）<small>Mobile Industry Processor Interface</small></h4>
+<p><span class="k">是什么</span>CSI-2 用于摄像头输入，DSI 用于显示输出，物理层为 D-PHY/C-PHY。</p>
+<p><span class="k">为什么需要</span>移动设备摄像头和屏幕的主流接口。</p>
+<p><span class="k">测试中怎么用</span>接真实传感器/屏幕测试，必要时用协议分析仪。</p>
+</div>
+
+<div class="g" id="g-serdes" data-short="串行器/解串器：把并行数据转成高速串行信号传输，再还原。">
+<h4>SerDes<small>Serializer/Deserializer</small></h4>
+<p><span class="k">是什么</span>PCIe、USB3、以太网等高速接口的核心模拟电路，速率可达数十 Gbps。</p>
+<p><span class="k">为什么需要</span>用少量线传输高带宽数据。</p>
+<p><span class="k">测试中怎么用</span>眼图、误码率（BER）测试、抖动容限测试，是硅后模拟验证重点。</p>
+</div>
+
+<div class="g" id="g-gpu" data-short="图形处理器：负责 3D 渲染和并行计算。">
+<h4>GPU<small>Graphics Processing Unit</small></h4>
+<p><span class="k">是什么</span>大规模并行处理器，用于图形渲染和通用计算。</p>
+<p><span class="k">为什么需要</span>界面、游戏、部分 AI 计算都依赖 GPU。</p>
+<p><span class="k">测试中怎么用</span>Vulkan/OpenGL ES CTS 验证正确性，GFXBench 测性能。</p>
+</div>
+
+<div class="g" id="g-vpu" data-short="视频处理单元：硬件视频编解码器。">
+<h4>VPU<small>Video Processing Unit</small></h4>
+<p><span class="k">是什么</span>专用硬件实现 H.264/H.265/AV1 等视频编解码。</p>
+<p><span class="k">为什么需要</span>比 CPU 软件编解码功耗低得多。</p>
+<p><span class="k">测试中怎么用</span>用标准一致性码流逐帧与参考输出比对。</p>
+</div>
+
+<div class="g" id="g-isp" data-short="图像信号处理器：把摄像头原始数据处理成可用图像。">
+<h4>ISP<small>Image Signal Processor</small></h4>
+<p><span class="k">是什么</span>对传感器 RAW 数据做去马赛克、降噪、白平衡、曝光等处理。</p>
+<p><span class="k">为什么需要</span>决定拍照和录像的画质。</p>
+<p><span class="k">测试中怎么用</span>用测试图卡和标准光源评估各模块效果。</p>
+</div>
+
+<div class="g" id="g-npu" data-short="神经网络处理器：专门加速 AI 推理的硬件。">
+<h4>NPU<small>Neural Processing Unit</small></h4>
+<p><span class="k">是什么</span>针对矩阵乘、卷积等运算优化的加速器。</p>
+<p><span class="k">为什么需要</span>以较低功耗提供高 AI 算力。</p>
+<p><span class="k">测试中怎么用</span>算子正确性与 CPU 参考比对，模型精度、推理性能测试。</p>
+</div>
+</div>
+
+<div class="gloss-group">
+<h3>安全</h3>
+
+<div class="g" id="g-secureboot" data-short="安全启动：每一级启动程序在执行前都要校验签名，防止被篡改。">
+<h4>Secure Boot<small>安全启动</small></h4>
+<p><span class="k">是什么</span>BootROM 用 eFuse 中的公钥哈希验证下一级镜像签名，每一级再验证下一级，形成信任链。</p>
+<p><span class="k">为什么需要</span>防止恶意或被篡改的固件运行。</p>
+<p><span class="k">测试中怎么用</span>测试合法/非法签名、防回滚；务必在未烧写安全 eFuse 的样片上测试，避免芯片锁死。</p>
+<p><span class="k an">打个比方</span>每一道门的保安都核验下一个人的证件。</p>
+</div>
+
+<div class="g" id="g-trustzone" data-short="ARM 的硬件安全隔离技术，把系统划分为安全世界和普通世界。">
+<h4>TrustZone<small>ARM 安全扩展</small></h4>
+<p><span class="k">是什么</span>CPU、总线、内存、外设都带“安全/非安全”属性，安全世界的资源普通世界无法访问。</p>
+<p><span class="k">为什么需要</span>保护密钥、指纹、支付等敏感数据，即使 Linux 被攻破也拿不到。</p>
+<p><span class="k">测试中怎么用</span>从非安全世界访问安全资源应被拒绝并报错；验证 TZC 和安全外设配置。</p>
+<p><span class="k an">打个比方</span>银行大厅里有金库，普通员工能进大厅，进不了金库。</p>
+</div>
+
+<div class="g" id="g-tee" data-short="可信执行环境（如 OP-TEE）：运行在 TrustZone 安全世界的小型操作系统。">
+<h4>TEE / OP-TEE<small>Trusted Execution Environment</small></h4>
+<p><span class="k">是什么</span>运行在安全世界的系统，承载可信应用（TA）；OP-TEE 是常用的开源实现。</p>
+<p><span class="k">为什么需要</span>提供密钥存储、DRM、安全支付等服务。</p>
+<p><span class="k">测试中怎么用</span>运行 OP-TEE 自带的 xtest 测试集。</p>
+</div>
+
+<div class="g" id="g-tzc" data-short="TrustZone 地址空间控制器：按地址区域设置内存的安全访问权限。">
+<h4>TZC / TZASC<small>TrustZone Address Space Controller</small></h4>
+<p><span class="k">是什么</span>放在 DDR 控制器前的过滤器，按地址区域配置哪些访问者可以读写。</p>
+<p><span class="k">为什么需要</span>保证安全世界的内存不被普通世界或非安全 DMA 访问。</p>
+<p><span class="k">测试中怎么用</span>验证非法访问被拦截并产生错误/中断。</p>
+</div>
+
+<div class="g" id="g-efuse" data-short="一次性可编程熔丝：烧写后永久不可改，用于存芯片 ID、密钥、安全配置。">
+<h4>eFuse / OTP<small>电子熔丝 / 一次性可编程存储</small></h4>
+<p><span class="k">是什么</span>芯片内的一次性存储位，烧断后不可恢复。用于芯片 ID、校准值、密钥哈希、安全启用、JTAG 禁用等。</p>
+<p><span class="k">为什么需要</span>安全配置必须不可篡改。</p>
+<p><span class="k">测试中怎么用</span>只在专用样片上测烧写；烧写操作要双人确认，误烧可能导致芯片报废或 JTAG 永久关闭。</p>
+</div>
+
+<div class="g" id="g-trng" data-short="真随机数发生器：基于物理噪声产生不可预测的随机数。">
+<h4>TRNG<small>True Random Number Generator</small></h4>
+<p><span class="k">是什么</span>利用电路热噪声、振荡器抖动等物理现象产生随机数。</p>
+<p><span class="k">为什么需要</span>密钥生成依赖高质量随机数。</p>
+<p><span class="k">测试中怎么用</span>采集大量数据，用 NIST SP800-22/90B 统计测试评估质量，且要覆盖高低温和电压。</p>
+</div>
+</div>
+
+<div class="gloss-group">
+<h3>功耗与性能</h3>
+
+<div class="g" id="g-dvfs" data-short="动态电压频率调节：根据负载实时调整电压和频率，在性能和功耗之间平衡。">
+<h4>DVFS<small>Dynamic Voltage and Frequency Scaling</small></h4>
+<p><span class="k">是什么</span>负载高时升压升频，负载低时降频降压。因为动态功耗与 V²·f 成正比，降压省电效果显著。</p>
+<p><span class="k">为什么需要</span>移动设备续航和发热控制的核心手段。</p>
+<p><span class="k">测试中怎么用</span>验证每个 OPP 稳定、切换过程无错误、调压顺序正确、频繁切换压力测试。</p>
+<p><span class="k an">打个比方</span>汽车自动变速箱。</p>
+</div>
+
+<div class="g" id="g-opp" data-short="工作性能点：一组“频率 + 对应电压”的组合，构成 DVFS 的档位表。">
+<h4>OPP<small>Operating Performance Point</small></h4>
+<p><span class="k">是什么</span>例如“1.8GHz @ 0.9V、1.2GHz @ 0.75V”，所有 OPP 组成 OPP 表。</p>
+<p><span class="k">为什么需要</span>DVFS 只能在这些验证过的档位之间切换。</p>
+<p><span class="k">测试中怎么用</span>通过 shmoo 测出每个频率的 Vmin，再加裕量确定 OPP 电压。</p>
+</div>
+
+<div class="g" id="g-avs" data-short="自适应电压调节：根据每颗芯片的体质和温度，给出各自最合适的工作电压。">
+<h4>AVS<small>Adaptive Voltage Scaling</small></h4>
+<p><span class="k">是什么</span>基于 ATE 数据（写入 eFuse）或片上传感器，为快片降低电压、慢片提高电压。</p>
+<p><span class="k">为什么需要</span>如果所有芯片都按最慢的片设置电压，快片会白白多耗电。</p>
+<p><span class="k">测试中怎么用</span>多颗不同 corner 的芯片验证各自电压表的稳定性和功耗收益。</p>
+</div>
+
+<div class="g" id="g-governor" data-short="调频策略：Linux 中决定何时升降频率的算法（schedutil、ondemand 等）。">
+<h4>Governor<small>调频策略</small></h4>
+<p><span class="k">是什么</span>cpufreq/devfreq 框架中根据负载选择 OPP 的算法；performance 固定最高频，powersave 固定最低频。</p>
+<p><span class="k">为什么需要</span>决定实际体验和功耗。</p>
+<p><span class="k">测试中怎么用</span>性能测试用 performance 锁频；功耗和体验测试评估默认 governor。</p>
+</div>
+
+<div class="g" id="g-thermal" data-short="温控：温度过高时自动降频，防止过热。">
+<h4>Thermal Throttling<small>温控降频</small></h4>
+<p><span class="k">是什么</span>温度传感器超过阈值时，系统降低频率或关闭部分核，温度回落后恢复。</p>
+<p><span class="k">为什么需要</span>防止芯片过热损坏，也影响持续性能。</p>
+<p><span class="k">测试中怎么用</span>验证阈值、响应时间和恢复；性能测试时要排除温控干扰。</p>
+</div>
+
+<div class="g" id="g-powerdomain" data-short="电源域：芯片中可独立上电/断电的一块区域。">
+<h4>Power Domain<small>电源域</small></h4>
+<p><span class="k">是什么</span>芯片被划分为多个区域，每个区域可以单独开关电源，例如每个 CPU 核、GPU、视频模块各一个。</p>
+<p><span class="k">为什么需要</span>不用的模块断电，彻底消除漏电。</p>
+<p><span class="k">测试中怎么用</span>逐个上下电，验证功能恢复、隔离和 retention；访问未上电的域可能导致总线挂死。</p>
+<p><span class="k an">打个比方</span>家里每个房间有独立的电闸，没人的房间可以拉闸。</p>
+</div>
+
+<div class="g" id="g-clockgating" data-short="时钟门控：模块空闲时关掉它的时钟，停止翻转以节省动态功耗。">
+<h4>Clock Gating<small>时钟门控</small></h4>
+<p><span class="k">是什么</span>在时钟路径上加开关，模块不工作时时钟停止。</p>
+<p><span class="k">为什么需要</span>没有翻转就没有动态功耗，而且开关速度快。</p>
+<p><span class="k">测试中怎么用</span>对比开关门控时的功耗差；时钟没开就访问寄存器会挂死。</p>
+<p><span class="k an">打个比方</span>离开房间时随手关灯（但电闸还开着）。</p>
+</div>
+
+<div class="g" id="g-powergating" data-short="电源门控：彻底切断某区域的电源，消除漏电。">
+<h4>Power Gating<small>电源门控</small></h4>
+<p><span class="k">是什么</span>用开关晶体管断开某电源域的供电，比时钟门控更省电但进出更慢，且内部状态会丢失。</p>
+<p><span class="k">为什么需要</span>漏电在先进工艺中占比很大，只有断电才能消除。</p>
+<p><span class="k">测试中怎么用</span>验证断电后漏电下降到预期，上电后功能正常。</p>
+</div>
+
+<div class="g" id="g-retention" data-short="状态保持：断电时用特殊寄存器或低压保持关键数据，上电后快速恢复。">
+<h4>Retention<small>状态保持</small></h4>
+<p><span class="k">是什么</span>模块主电源断开时，用单独供电的 retention 寄存器或低电压 SRAM 保存状态。</p>
+<p><span class="k">为什么需要</span>避免每次唤醒都要完整重新初始化，缩短唤醒时间。</p>
+<p><span class="k">测试中怎么用</span>休眠前写入特定值，唤醒后检查是否保持；唤醒后挂死常与 retention 丢失有关。</p>
+</div>
+
+<div class="g" id="g-isolation" data-short="隔离单元：电源域断电时把其输出钳位到固定值，防止干扰仍在工作的模块。">
+<h4>Isolation<small>隔离</small></h4>
+<p><span class="k">是什么</span>断电域的输出会变成不确定电平，隔离单元把它们固定为 0 或 1。</p>
+<p><span class="k">为什么需要</span>避免不确定信号导致其他模块出错或漏电。</p>
+<p><span class="k">测试中怎么用</span>某域断电后其他模块出现异常，要检查隔离使能顺序。</p>
+</div>
+
+<div class="g" id="g-leakage" data-short="漏电/静态功耗：晶体管关断时仍有的电流，随温度升高急剧增加。">
+<h4>Leakage<small>漏电 / 静态功耗</small></h4>
+<p><span class="k">是什么</span>晶体管即使不翻转也存在漏电流，先进工艺下占总功耗相当比例。</p>
+<p><span class="k">为什么需要</span>决定待机功耗；高温下漏电增大，还可能形成“发热—漏电—更热”的正反馈。</p>
+<p><span class="k">测试中怎么用</span>在多个温度、多个 corner 下测静态电流；FF 片和高温是最坏情况。</p>
+</div>
+
+<div class="g" id="g-dynpower" data-short="动态功耗：电路翻转时充放电消耗的功率，P = α·C·V²·f。">
+<h4>Dynamic Power<small>动态功耗</small></h4>
+<p><span class="k">是什么</span>α 是翻转率、C 是负载电容、V 是电压、f 是频率。电压影响是平方关系。</p>
+<p><span class="k">为什么需要</span>理解它就理解了 DVFS 为什么有效：降一点电压就能省很多电。</p>
+<p><span class="k">测试中怎么用</span>测不同 OPP、不同负载下的功耗曲线，与功耗模型对比。</p>
+</div>
+
+<div class="g" id="g-wfi" data-short="等待中断指令：CPU 空闲时执行，停止取指进入浅睡眠，有中断时立即唤醒。">
+<h4>WFI / WFE<small>Wait For Interrupt / Event</small></h4>
+<p><span class="k">是什么</span>ARM 指令，让 CPU 停在低功耗状态直到中断或事件到来。</p>
+<p><span class="k">为什么需要</span>最基础、最快的 CPU 空闲省电方式，也是更深 idle 状态的入口。</p>
+<p><span class="k">测试中怎么用</span>测 WFI 状态功耗和唤醒延迟。</p>
+</div>
+
+<div class="g" id="g-str" data-short="挂起到内存：系统休眠时只保留 DDR 自刷新，其余基本断电。">
+<h4>Suspend-to-RAM<small>STR / 待机休眠</small></h4>
+<p><span class="k">是什么</span>系统状态保存在 DDR 中，DDR 进入自刷新，CPU 和大部分外设断电，唤醒后从内存恢复。</p>
+<p><span class="k">为什么需要</span>手机息屏、笔记本合盖的待机模式。</p>
+<p><span class="k">测试中怎么用</span>测待机电流、唤醒时间、唤醒源；数千次休眠唤醒循环。</p>
+</div>
+
+<div class="g" id="g-benchmark" data-short="基准测试程序：用标准负载衡量性能（SPEC、CoreMark、STREAM 等）。">
+<h4>Benchmark<small>基准测试</small></h4>
+<p><span class="k">是什么</span>公认的标准测试程序，结果可以横向比较，例如 SPEC CPU、CoreMark、STREAM、GFXBench。</p>
+<p><span class="k">为什么需要</span>量化性能，与目标和竞品比较。</p>
+<p><span class="k">测试中怎么用</span>固定环境多次运行，与性能模型对比。</p>
+</div>
+
+<div class="g" id="g-ipc" data-short="每周期指令数：衡量 CPU 微架构效率的核心指标。">
+<h4>IPC<small>Instructions Per Cycle</small></h4>
+<p><span class="k">是什么</span>执行的指令数除以时钟周期数。性能 ≈ IPC × 频率。</p>
+<p><span class="k">为什么需要</span>排除频率因素，直接反映微架构设计是否达标。</p>
+<p><span class="k">测试中怎么用</span>用 PMU 计数器测量，与性能模型对比，偏差大说明可能有性能 bug。</p>
+</div>
+
+<div class="g" id="g-bandwidth" data-short="带宽是单位时间能传输的数据量；延迟是一次访问从发出到返回的时间。">
+<h4>Bandwidth / Latency<small>带宽 / 延迟</small></h4>
+<p><span class="k">是什么</span>带宽单位如 GB/s，延迟单位如 ns 或周期数。</p>
+<p><span class="k">为什么需要</span>内存带宽和延迟往往是系统性能瓶颈。</p>
+<p><span class="k">测试中怎么用</span>STREAM 测带宽，pointer chasing 测延迟；画出延迟随负载变化的曲线。</p>
+<p><span class="k an">打个比方</span>带宽是公路有几条车道，延迟是从 A 开到 B 要多久。</p>
+</div>
+</div>
+
+<div class="gloss-group">
+<h3>稳定性与裕量</h3>
+
+<div class="g" id="g-shmoo" data-short="Shmoo 图：在两个参数（如电压×频率）的网格上逐点测试并标记通过/失败的图。">
+<h4>Shmoo<small>参数扫描图</small></h4>
+<p><span class="k">是什么</span>横轴、纵轴各是一个参数（常见电压×频率、电压×温度），每格标记 Pass/Fail，形成工作区域图（见图 6）。名字来源于早期图形酷似漫画中的生物 Shmoo。</p>
+<p><span class="k">为什么需要</span>直观展示芯片的工作窗口和裕量，确定 Vmin/Fmax 和 OPP。</p>
+<p><span class="k">测试中怎么用</span>用对时序最敏感的负载，在多温度、多芯片上自动化扫描。</p>
+<p><span class="k an">打个比方</span>给运动员画“能力地图”：多快的速度能坚持多久。</p>
+</div>
+
+<div class="g" id="g-vmin" data-short="Vmin 是给定频率下能稳定工作的最低电压；Fmax 是给定电压下的最高频率。">
+<h4>Vmin / Fmax<small>最低工作电压 / 最高工作频率</small></h4>
+<p><span class="k">是什么</span>两个关键电气指标，决定芯片的功耗和性能上限。</p>
+<p><span class="k">为什么需要</span>OPP 电压要在 Vmin 基础上留裕量；产品频率不能超过 Fmax。</p>
+<p><span class="k">测试中怎么用</span>shmoo 扫描；覆盖多温度、多 corner、老化后复测。</p>
+</div>
+
+<div class="g" id="g-tempinv" data-short="温度反转：先进工艺低电压下，芯片在低温时反而更慢。">
+<h4>Temperature Inversion<small>温度反转效应</small></h4>
+<p><span class="k">是什么</span>传统认识是高温更慢，但在先进工艺、低电压下，低温时阈值电压升高的影响更大，电路反而变慢。</p>
+<p><span class="k">为什么需要</span>只测高温会漏掉低温失败的问题。</p>
+<p><span class="k">测试中怎么用</span>Vmin shmoo 必须覆盖低温点（如 -40°C）。</p>
+</div>
+
+<div class="g" id="g-powervirus" data-short="功耗病毒：专门设计让芯片功耗和电流变化最大的程序，用于极限压力测试。">
+<h4>Power Virus<small>功耗病毒</small></h4>
+<p><span class="k">是什么</span>精心构造的指令序列，让尽可能多的电路同时翻转，产生最大功耗或最剧烈的电流变化（di/dt）。</p>
+<p><span class="k">为什么需要</span>真实应用很难达到最坏情况，需要它来验证电源、散热和时序裕量。</p>
+<p><span class="k">测试中怎么用</span>作为 shmoo 和电源完整性测试的负载。</p>
+</div>
+</div>
+
+<div class="gloss-group">
+<h3>问题处理与协作</h3>
+
+<div class="g" id="g-eco" data-short="工程变更：流片后对设计的修改，可能只改金属层，也可能全层改版。">
+<h4>ECO<small>Engineering Change Order，工程变更</small></h4>
+<p><span class="k">是什么</span>对已流片设计的修改。Metal ECO 只改金属层；全层改版（respin）要重做所有掩膜，成本和周期更高。</p>
+<p><span class="k">为什么需要</span>修复硅上发现的硬件 bug。</p>
+<p><span class="k">测试中怎么用</span>硬件 bug 确认后进入 ECO 评估；ECO 修改要经过仿真、形式等价验证，必要时先做 FIB 验证。</p>
+<p><span class="k an">打个比方</span>新车发现问题后的“召回改款”：小改只换零件，大改要重开模具。</p>
+</div>
+
+<div class="g" id="g-metaleco" data-short="金属层 ECO：只修改金属连线层，利用预留的备用单元修 bug，成本和周期较低。">
+<h4>Metal ECO<small>金属层工程变更</small></h4>
+<p><span class="k">是什么</span>设计时在芯片里撒下备用逻辑单元（spare cell），ECO 时只改金属连线把它们接入电路。</p>
+<p><span class="k">为什么需要</span>只需重做少量金属层掩膜，甚至可以利用已加工到一半的晶圆，节省时间和成本。</p>
+<p><span class="k">测试中怎么用</span>评估 bug 能否用 Metal ECO 修复是 ECO 决策的关键一步。</p>
+</div>
+
+<div class="g" id="g-chickenbit" data-short="Chicken bit：设计时预留的配置位，可以关闭某个新功能来规避 bug。">
+<h4>Chicken Bit<small>功能禁用位</small></h4>
+<p><span class="k">是什么</span>寄存器中预留的开关，用于关闭预取、某个优化、新特性等。名字来自“胆小鬼”——没把握的新功能都留条退路。</p>
+<p><span class="k">为什么需要</span>新功能有 bug 时可以通过配置关闭，避免改版。</p>
+<p><span class="k">测试中怎么用</span>定位问题时逐个关闭 chicken bit 缩小范围；确认后作为 workaround 写入启动代码。</p>
+</div>
+
+<div class="g" id="g-workaround" data-short="规避方案：不修改硬件，用软件或配置手段绕开硬件 bug。">
+<h4>Workaround<small>规避方案</small></h4>
+<p><span class="k">是什么</span>通过修改驱动流程、设置 chicken bit、降频、禁用功能、固件补丁等方式避开 bug 的触发条件。</p>
+<p><span class="k">为什么需要</span>ECO 周期长、成本高，很多 bug 可以通过 workaround 满足量产要求。</p>
+<p><span class="k">测试中怎么用</span>按芯片版本号条件启用；量化对性能/功耗的影响；写入 Errata。</p>
+</div>
+
+<div class="g" id="g-errata" data-short="勘误表：记录芯片已知硬件问题、影响和规避方法的正式文档。">
+<h4>Errata<small>芯片勘误表</small></h4>
+<p><span class="k">是什么</span>对客户和内部发布的已知问题列表，每条包含编号、描述、触发条件、影响、workaround、修复计划。</p>
+<p><span class="k">为什么需要</span>让软件开发者和客户知道哪些地方要绕开。</p>
+<p><span class="k">测试中怎么用</span>硅后测试的重要产出之一；驱动中的 workaround 代码要注明 Errata 编号。</p>
+</div>
+
+<div class="g" id="g-revid" data-short="芯片版本号：区分不同改版（如 A0、A1、B0）的硬件标识，软件可读取。">
+<h4>Revision ID<small>芯片版本号</small></h4>
+<p><span class="k">是什么</span>寄存器或 eFuse 中的版本编码，每次 ECO 改版递增（如 A0 → A1 → B0）。</p>
+<p><span class="k">为什么需要</span>同一份软件要支持多个芯片版本，需要知道当前是哪一版。</p>
+<p><span class="k">测试中怎么用</span>workaround 代码根据版本号决定是否启用。</p>
+</div>
+
+<div class="g" id="g-triage" data-short="问题分诊：定期评审新 bug，确定严重级别、归属和负责人。">
+<h4>Triage<small>问题分诊</small></h4>
+<p><span class="k">是什么</span>团队定期开会过一遍新提交和未解决的 bug，分级、分类（硬件/软件/板级/Spec）、指派负责人。</p>
+<p><span class="k">为什么需要</span>回片初期 bug 很多，必须集中精力在阻塞性问题上。</p>
+<p><span class="k">测试中怎么用</span>Bringup 期间每周 2–3 次，Blocker 级问题每天跟进。</p>
+</div>
+
+<div class="g" id="g-regression" data-short="回归测试：每次改动后重新跑已有用例，确保没有引入新问题。">
+<h4>Regression<small>回归测试</small></h4>
+<p><span class="k">是什么</span>定期或在每次软件更新后，自动执行整套用例并对比结果。</p>
+<p><span class="k">为什么需要</span>修一个 bug 可能引入另一个；workaround 也可能影响其他功能。</p>
+<p><span class="k">测试中怎么用</span>每晚自动回归，结果进看板；失败用例要分析是新问题还是环境问题。</p>
+</div>
+
+<div class="g" id="g-ci" data-short="持续集成：代码提交后自动编译、部署到测试板、运行回归。">
+<h4>CI<small>Continuous Integration，持续集成</small></h4>
+<p><span class="k">是什么</span>用 Jenkins、GitLab CI 等系统串起编译、烧写、上电、测试、收集日志的全流程。</p>
+<p><span class="k">为什么需要</span>测试板和用例数量多，靠人工跑不过来，也容易出错。</p>
+<p><span class="k">测试中怎么用</span>配合可编程电源、继电器、串口服务器实现无人值守测试。</p>
+</div>
+</div>
+
+<div class="gloss-group">
+<h3>测量仪器</h3>
+
+<div class="g" id="g-scope" data-short="示波器：显示电压随时间变化的波形，用于看电源、时钟、信号质量。">
+<h4>Oscilloscope<small>示波器</small></h4>
+<p><span class="k">是什么</span>以高采样率采集模拟电压并显示波形，可以测频率、幅度、上升时间、抖动、眼图。</p>
+<p><span class="k">为什么需要</span>上电时序、电源纹波、时钟质量、高速信号质量都需要看真实波形。</p>
+<p><span class="k">测试中怎么用</span>带宽要足够（信号最高频率的 3–5 倍）；地线尽量短；多通道同时抓电源和复位。</p>
+</div>
+
+<div class="g" id="g-logic" data-short="逻辑分析仪：同时采集多路数字信号，可解码 I2C/SPI/UART 等协议。">
+<h4>Logic Analyzer<small>逻辑分析仪</small></h4>
+<p><span class="k">是什么</span>只关心高低电平，但通道数多（16–几百路），能长时间记录并解码协议。</p>
+<p><span class="k">为什么需要</span>看清多根信号之间的时序关系和协议内容。</p>
+<p><span class="k">测试中怎么用</span>调试 I2C 无应答、SPI 数据错位、GPIO 时序；采样率至少为信号频率的 4–10 倍。</p>
+</div>
+
+<div class="g" id="g-poweranalyzer" data-short="电源分析仪 / SMU：既能供电又能高精度测量电压电流，用于功耗测试。">
+<h4>Power Analyzer / SMU<small>电源分析仪 / 源测量单元</small></h4>
+<p><span class="k">是什么</span>如 Keysight N6705C、Keithley SMU，可输出精确电压并以高采样率记录电流，从微安到数安。</p>
+<p><span class="k">为什么需要</span>功耗测试需要高精度、多通道、可记录的电流数据。</p>
+<p><span class="k">测试中怎么用</span>直接给芯片某路电源供电并测量；注意量程切换和线损补偿。</p>
+</div>
+
+<div class="g" id="g-protocol" data-short="协议分析仪：抓取并解析 PCIe、USB、以太网等高速协议数据包。">
+<h4>Protocol Analyzer<small>协议分析仪</small></h4>
+<p><span class="k">是什么</span>串接在链路中，记录每个数据包和链路状态变化。</p>
+<p><span class="k">为什么需要</span>高速接口问题（链路训练失败、兼容性）只看波形难以定位。</p>
+<p><span class="k">测试中怎么用</span>PCIe 链路训练、USB 枚举失败时抓包分析。</p>
+</div>
+
+<div class="g" id="g-thermostream" data-short="Thermostream：向单颗芯片吹冷/热气流，快速控制芯片温度的设备。">
+<h4>Thermostream / 温箱<small>温度控制设备</small></h4>
+<p><span class="k">是什么</span>温箱把整块板放进可控温腔体；Thermostream 用罩子扣在芯片上吹温控气流，变温快。</p>
+<p><span class="k">为什么需要</span>芯片规格要在整个温度范围成立，高低温测试必不可少。</p>
+<p><span class="k">测试中怎么用</span>温度 shmoo、高低温功耗、高温长稳；注意低温时防止结露。</p>
+</div>
+</div>
+
+<p style="margin-top:40px;color:var(--muted);font-size:13px">本文档为单文件离线版本，配套 Markdown 版：post-silicon-validation-guide.md。</p>
+</main>
+
+<script>
+(function(){
+  // 术语悬停提示：从术语表条目的 data-short 读取
+  var missing=[];
+  document.querySelectorAll('a.t').forEach(function(a){
+    var id=a.getAttribute('href').slice(1), g=document.getElementById(id);
+    if(g&&g.dataset.short){a.setAttribute('data-tip',g.dataset.short);a.setAttribute('aria-label',a.textContent+'：'+g.dataset.short);}
+    else missing.push(id);
+  });
+  if(missing.length) console.warn('缺少术语条目:',missing);
+
+  // 术语索引
+  var idx=document.getElementById('gidx');
+  if(idx){
+    var html=[];
+    document.querySelectorAll('.g').forEach(function(g){
+      if(g.id==='g-term-demo')return;
+      var h=g.querySelector('h4'); var name=h.childNodes[0].textContent.trim();
+      html.push('<div><a href="#'+g.id+'">'+name+'</a></div>');
+    });
+    idx.innerHTML=html.join('');
+  }
+
+  // Shmoo 示例图
+  var cells=document.getElementById('shmoo-cells');
+  if(cells){
+    var ns='http://www.w3.org/2000/svg';
+    var volts=['1.00','0.95','0.90','0.85','0.80','0.75'];
+    var freqs=[600,800,1000,1200,1400,1600,1800,2000];
+    var maxPass=[7,6,5,4,2,0]; // 每个电压下最后一个通过的频率下标
+    var opp={'0,6':1,'2,4':1,'4,2':1};
+    var x0=70,y0=36,w=46,h=40;
+    function el(tag,attrs,text){var e=document.createElementNS(ns,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;cells.appendChild(e);return e;}
+    volts.forEach(function(v,r){
+      el('text',{x:x0-10,y:y0+r*h+25,'font-size':12,'text-anchor':'end',fill:'#334155'},v);
+      freqs.forEach(function(f,c){
+        var pass=c<=maxPass[r], isOpp=opp[r+','+c];
+        el('rect',{x:x0+c*w,y:y0+r*h,width:w-3,height:h-3,rx:3,fill:pass?'#86efac':'#fca5a5',stroke:isOpp?'#1d4ed8':'none','stroke-width':isOpp?3:0});
+        el('text',{x:x0+c*w+(w-3)/2,y:y0+r*h+24,'font-size':12,'text-anchor':'middle',fill:pass?'#166534':'#991b1b'},pass?'P':'F');
+      });
+    });
+    freqs.forEach(function(f,c){el('text',{x:x0+c*w+(w-3)/2,y:y0+volts.length*h+16,'font-size':11.5,'text-anchor':'middle',fill:'#334155'},f);});
+  }
+
+  // 目录高亮
+  var links={};document.querySelectorAll('nav#toc a').forEach(function(a){links[a.getAttribute('href').slice(1)]=a;});
+  if('IntersectionObserver' in window){
+    var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&links[e.target.id]){Object.values(links).forEach(function(l){l.classList.remove('active')});links[e.target.id].classList.add('active');}});},{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('h2[id],h3[id]').forEach(function(h){obs.observe(h);});
+  }
+})();
+</script>
+</body>
+</html>
